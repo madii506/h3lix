@@ -15,6 +15,7 @@ try {
   if (/[?&]noworld/.test(location.search)) throw new Error('off');
   world = startWorld(canvas, { startShot: 'gate', active: () => (!entered || windowOn ? 1 : 0.3) });
 } catch (e) { canvas.style.background = 'radial-gradient(circle at 70% 45%,#3a1a2a,#07060f 60%)'; }
+window.__h3 = () => world && world.info();
 
 // ---------- scroll-scrubbed camera: each section names a shot, the camera glides between them ----------
 let anchors = [];
@@ -99,9 +100,10 @@ W.onChange(renderConn); renderConn(); W.reconnect();
 
 // ---------- nav, progress, chapters ----------
 const nav = $('#nav'), links = $$('.links a'), chaps = $$('.chapters a');
+let scrollQueued = false;
 function onScroll() {
-  nav.classList.toggle('solid', scrollY > 40);
-  camByScroll(); scenes();
+  if (scrollQueued) return; scrollQueued = true;
+  requestAnimationFrame(() => { scrollQueued = false; nav.classList.toggle('solid', scrollY > 40); camByScroll(); scenes(); });
 }
 addEventListener('scroll', onScroll, { passive: true });
 const secIO = new IntersectionObserver(es => es.forEach(e => {
@@ -184,9 +186,13 @@ function scenes() {
       encTs[i].textContent = kk >= 1 ? 'encrypted' : kk > 0 ? 'encrypting…' : 'plain'; encTs[i].classList.toggle('enc-on', kk > 0);
     });
     $('#encbar').style.width = (k3 * 100) + '%';
+    const kp = clamp((k3 - 0.08) / 0.84), pv = $('#passvis');
+    pv.style.setProperty('--k', kp.toFixed(4)); pv.style.setProperty('--flare', Math.max(0, 1 - Math.abs(kp - 0.5) / 0.12).toFixed(3));
+    $('#pcube').classList.toggle('enc', kp > 0.5);
+    $('#pcl').textContent = kp > 0.5 ? '0x' + [...Array(8)].map(() => HEX[(Math.random() * 16) | 0]).join('') : 'your share';
     $('#encstate').textContent = k3 < 0.15 ? 'before the Ring' : k3 < 0.85 ? 'inside the Ring' : 'what the chain sees';
   }
-  for (const b of nBands) { const r = b.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) continue; b.style.setProperty('--gy', (40 + (r.top - innerHeight * 0.3) * -0.18).toFixed(0) + 'px'); }
+  for (const b of nBands) { const r = b.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) continue; b.style.setProperty('--gy', ((r.top - innerHeight * 0.3) * -0.18).toFixed(0) + 'px'); }
   const rr = roll.getBoundingClientRect();
   const done = $$('#roll li.done').length, all = $$('#roll li').length;
   if (rr.top < innerHeight * 0.85 && !dialSet) { dialSet = true; animDial(done / all * 100); $('#dnum').textContent = done + '/' + all; }
@@ -198,14 +204,14 @@ function scenes() {
 // ---------- the wordmark assembles from coral pixels ----------
 (async function mark() {
   const h = $('#mark'), txt = h.querySelector('.mark-txt'), cv = h.querySelector('.mark-px');
-  try { await document.fonts.load('600 100px Disp'); } catch (e) {}
+  try { await document.fonts.load('700 100px Pix'); await document.fonts.load('600 100px Disp'); } catch (e) {}
   const r = txt.getBoundingClientRect(), hr = h.getBoundingClientRect();
   const dpr = Math.min(2, devicePixelRatio || 1), Wd = Math.ceil(r.width + 40), Hd = Math.ceil(hr.height + 20);
   cv.width = Wd * dpr; cv.height = Hd * dpr; cv.style.width = Wd + 'px'; cv.style.height = Hd + 'px';
   cv.style.left = (txt.offsetLeft - 20) + 'px';
   const off = document.createElement('canvas'); off.width = Wd; off.height = Hd; const oc = off.getContext('2d');
   const cs = getComputedStyle(h);
-  oc.font = `${cs.fontWeight} ${cs.fontSize} Disp`; oc.textBaseline = 'alphabetic'; oc.fillStyle = '#fff'; oc.letterSpacing = cs.letterSpacing;
+  oc.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`; oc.textBaseline = 'alphabetic'; oc.fillStyle = '#fff'; oc.letterSpacing = cs.letterSpacing;
   const m = oc.measureText('H3LIX');
   const base = (Hd - 20 + m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2 + 6;
   oc.fillText('H3LIX', 20, base);
@@ -226,6 +232,20 @@ function scenes() {
   };
   requestAnimationFrame(draw);
   setTimeout(() => h.classList.add('done'), T + 1200);
+})();
+
+// the gate title glitches through cipher glyphs now and then
+(function titleGlitch() {
+  if (RM) return;
+  const h = $('#mark'), t = h.querySelector('.mark-txt'), word = 'H3LIX', G = '█▓▒░#$%&@01';
+  setInterval(() => {
+    if (entered || document.hidden || !h.classList.contains('done')) return;
+    let n = 0; h.classList.add('glitch');
+    const id = setInterval(() => {
+      n++; t.textContent = word.split('').map((c, i) => (Math.random() < 0.45 - n * 0.06 ? G[(Math.random() * G.length) | 0] : c)).join('');
+      if (n >= 7) { clearInterval(id); t.textContent = word; h.classList.remove('glitch'); }
+    }, 55);
+  }, 1700);
 })();
 
 // ---------- spiral calculator ----------
@@ -314,12 +334,22 @@ if (!RM && matchMedia('(pointer:fine)').matches) {
   const fit = () => { cv.width = innerWidth; cv.height = innerHeight; }; fit(); addEventListener('resize', fit);
   let lx = 0, ly = 0;
   addEventListener('pointermove', e => { if (Math.hypot(e.clientX - lx, e.clientY - ly) > 14) { lx = e.clientX; ly = e.clientY; pts.push({ x: Math.round(lx / 8) * 8, y: Math.round(ly / 8) * 8, a: 1 }); if (pts.length > 26) pts.shift(); } }, { passive: true });
-  const tick = () => { requestAnimationFrame(tick); c.clearRect(0, 0, cv.width, cv.height); for (const p of pts) { p.a -= 0.035; if (p.a <= 0) continue; const s = 8 * p.a; c.globalAlpha = p.a * 0.85; c.fillStyle = '#ff5a32'; c.fillRect(p.x - s / 2, p.y - s / 2, s, s); } c.globalAlpha = 1; };
+  let drew = false;
+  const tick = () => { requestAnimationFrame(tick); const alive = pts.some(p => p.a > 0); if (!alive && !drew) return; drew = alive; c.clearRect(0, 0, cv.width, cv.height); for (const p of pts) { p.a -= 0.035; if (p.a <= 0) continue; const s = 8 * p.a; c.globalAlpha = p.a * 0.85; c.fillStyle = '#ff5a32'; c.fillRect(p.x - s / 2, p.y - s / 2, s, s); } c.globalAlpha = 1; };
   tick();
 }
 
+// tilt
+if (!RM && matchMedia('(pointer:fine)').matches) $$('.card, .tile, .cardwrap, .calc-out, .typer').forEach(el => {
+  el.classList.add('tilt');
+  el.addEventListener('pointermove', e => { const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5; el.style.transform = `perspective(900px) rotateX(${(-y * 7).toFixed(2)}deg) rotateY(${(x * 9).toFixed(2)}deg) translateZ(0)`; });
+  el.addEventListener('pointerleave', () => { el.style.transform = ''; });
+});
+
 // ---------- live readings ----------
 const set = (k, v, cls) => $$(`[data-live="${k}"]`).forEach(el => {
+  const before = el.dataset.last; el.dataset.last = String(v);
+  if (before !== undefined && before !== String(v)) { const t = el.closest('.tile'); if (t) { t.classList.add('tick'); setTimeout(() => t.classList.remove('tick'), 900); } }
   if (typeof v === 'number' && el.hasAttribute('data-count')) countTo(el, v, fmt.int); else el.textContent = v;
   el.classList.remove('ok', 'bad', 'idle'); if (cls) el.classList.add(cls);
 });

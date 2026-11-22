@@ -9,8 +9,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 export function startWorld(canvas, opts = {}) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mobile = innerWidth < 760;
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.5 : 1.75));
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.25));
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   let seed = 41; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
@@ -77,7 +77,6 @@ export function startWorld(canvas, opts = {}) {
       if (h === 1 && k === face && i !== 0) vox('window', x + i * v, y + h * v, z + k * v, v, 0xffc27a, 0.02); else vox('wood', x + i * v, y + h * v, z + k * v, v, 0x3d2b2a, 0.08);
     for (let i = -2; i <= 2; i++) for (let k = -1; k <= 1; k++) vox(rnd() < 0.55 ? 'snow' : 'roof', x + i * v * 0.75, y + 3 * v, z + k * v, v, rnd() < 0.55 ? SNOW[0] : roof);
     vox('roof', x, y + 4 * v, z, v, roof);
-    if (!mobile) { const l = new THREE.PointLight(0xffa04d, 3.2, 4.5, 2); l.position.set(x, y + v * 1.5, z + face * v * 2); scene.add(l); lights.push(l); }
   }
   function lamp(x, y, z, v) { vox('wood', x, y + v, z, v * 0.5, 0x3d2b2a); vox('wood', x, y + v * 1.5, z, v * 0.5, 0x3d2b2a); vox('lamp', x, y + v * 2.1, z, v * 0.7, 0xffb070, 0.02); }
 
@@ -164,27 +163,31 @@ export function startWorld(canvas, opts = {}) {
   const coinIsl = [[-9.5, 6.5, -6.5], [9.5, 7.5, -7.5], [-10.5, -3.6, -3.0], [10.5, -1.6, -9.0]].map(([dx, dy, dz]) => new THREE.Vector3(RC.x + dx, RC.y + dy, RC.z + dz));
   const coinMat = new THREE.MeshStandardMaterial({ color: 0xffc35a, emissive: 0xff8a20, emissiveIntensity: 0.55, roughness: 0.35, metalness: 0.4, flatShading: true });
   const coins = [];
+  const islMats = { top: new THREE.MeshStandardMaterial({ roughness: 0.9, flatShading: true }), rock: new THREE.MeshStandardMaterial({ roughness: 0.9, flatShading: true }) };
+  const faceMat = new THREE.MeshStandardMaterial({ color: 0xff9a3a, emissive: 0xff6a20, emissiveIntensity: 0.35, roughness: 0.4, metalness: 0.3, flatShading: true });
+  const inst = (mat, list, parent) => {
+    const m = new THREE.InstancedMesh(box, mat, list.length);
+    list.forEach(([x, y, z, sx, sy, sz, hex], i) => { o.position.set(x, y, z); o.quaternion.identity(); o.scale.set(sx, sy, sz); o.updateMatrix(); m.setMatrixAt(i, o.matrix); if (hex != null) m.setColorAt(i, col.set(hex)); });
+    parent.add(m); return m;
+  };
   for (const [ci, P] of coinIsl.entries()) {
-    const g0 = groups.get('snow').list.length;
-    // a tiny island under each coin
     const isl = new THREE.Group(); scene.add(isl);
-    const v = 0.34;
+    const v = 0.34, tops = [], rocks = [];
     for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) {
       const d = Math.hypot(x, z); if (d > 3.2) continue;
-      const top = new THREE.Mesh(box, new THREE.MeshStandardMaterial({ color: d > 2.6 ? 0xc6d0ea : 0xeef2fc, roughness: 0.9, flatShading: true }));
-      top.position.set(P.x + x * v, P.y - 1.1, P.z + z * v); top.scale.setScalar(v * 0.98); isl.add(top);
+      tops.push([P.x + x * v, P.y - 1.1, P.z + z * v, v * 0.98, v * 0.98, v * 0.98, d > 2.6 ? 0xc6d0ea : 0xeef2fc]);
       const depth = Math.max(1, Math.round((3.4 - d) * 1.4));
-      for (let k = 1; k <= depth; k++) { const r = new THREE.Mesh(box, new THREE.MeshStandardMaterial({ color: [0x3e3459, 0x342a4f, 0x2b2444][(k + x + z + 9) % 3], roughness: 0.9, flatShading: true })); r.position.set(P.x + x * v, P.y - 1.1 - k * v, P.z + z * v); r.scale.setScalar(v * 0.98); isl.add(r); }
+      for (let k = 1; k <= depth; k++) rocks.push([P.x + x * v, P.y - 1.1 - k * v, P.z + z * v, v * 0.98, v * 0.98, v * 0.98, [0x3e3459, 0x342a4f, 0x2b2444][(k + x + z + 9) % 3]]);
     }
-    // the coin: a voxel disc standing up, turning
+    inst(islMats.top, tops, isl); inst(islMats.rock, rocks, isl);
     const coin = new THREE.Group(); coin.position.copy(P); scene.add(coin);
-    const cv = 0.16;
+    const cv = 0.16, rim = [], face = [];
     for (let x = -6; x <= 6; x++) for (let y = -6; y <= 6; y++) {
       const d = Math.hypot(x, y); if (d > 6.3) continue;
-      const rim = d > 5.0 || (d < 2.6 && d > 1.6);
-      const m = new THREE.Mesh(box, rim ? coinMat : new THREE.MeshStandardMaterial({ color: 0xff9a3a, emissive: 0xff6a20, emissiveIntensity: 0.35, roughness: 0.4, metalness: 0.3, flatShading: true }));
-      m.position.set(x * cv, y * cv, 0); m.scale.set(cv, cv, cv * (rim ? 2.2 : 1.4)); coin.add(m);
+      const r = d > 5.0 || (d < 2.6 && d > 1.6);
+      (r ? rim : face).push([x * cv, y * cv, 0, cv, cv, cv * (r ? 2.2 : 1.4), null]);
     }
+    inst(coinMat, rim, coin); inst(faceMat, face, coin);
     coins.push({ g: coin, isl, ph: ci * 1.7, base: P.clone() });
   }
   // the fee streams: each coin sends cubes along a helix into the ring
@@ -205,7 +208,6 @@ export function startWorld(canvas, opts = {}) {
   // ---- the story: one fee, followed from a coin, through the ring, to a holder's door ----
   const heroMat = new THREE.MeshStandardMaterial({ color: 0xffe2b0, emissive: 0xffa040, emissiveIntensity: 2.2, roughness: 0.3, flatShading: true });
   const hero = new THREE.Mesh(box, heroMat); hero.scale.setScalar(0.34); hero.visible = false; scene.add(hero);
-  const heroLight = new THREE.PointLight(0xff9a50, 0, 6, 1.6); scene.add(heroLight);
   const trailN = 18, trail = new THREE.InstancedMesh(box, feeMat, trailN); trail.visible = false; scene.add(trail);
   const doorAt = new THREE.Vector3(HX + 2.9, HY + 0.7, HZ + 2.6 + 0.9);
   const sideV = new THREE.Vector3().crossVectors(RN, D).normalize();
@@ -324,16 +326,15 @@ export function startWorld(canvas, opts = {}) {
     if (story != null) {
       storyPos(story, fp); hero.visible = true; trail.visible = true; hero.position.copy(fp); hero.rotation.set(t * 2, t * 3, 0);
       const enc = story > 0.55; heroMat.color.set(enc ? 0xff5a32 : 0xffe2b0); heroMat.emissive.set(enc ? 0xff3010 : 0xffa040);
-      heroLight.position.copy(fp); heroLight.intensity = 18;
       storyHist.unshift(fp.clone()); if (storyHist.length > trailN) storyHist.pop();
       for (let i = 0; i < trailN; i++) { const q = storyHist[Math.min(i, storyHist.length - 1)]; o.position.copy(q); o.quaternion.identity(); o.scale.setScalar(0.2 * (1 - i / trailN)); o.updateMatrix(); trail.setMatrixAt(i, o.matrix); }
       trail.instanceMatrix.needsUpdate = true;
       const flare = Math.max(0, 1 - Math.abs(story - 0.55) / 0.08);
       ringMain.material.color.setRGB(2.4 + flare * 3, 1.15 + flare * 1.6, 0.72 + flare * 1.2);
       disc.material.opacity = 0.07 + flare * 0.35;
-      if (lights[1]) lights[1].intensity = 3.2 + Math.max(0, (story - 0.9) / 0.1) * 30;
+      groups.get('window').mat.emissiveIntensity = 1.4 + Math.max(0, (story - 0.88) / 0.12) * 3.5;
     } else if (hero.visible) {
-      hero.visible = false; trail.visible = false; heroLight.intensity = 0; ringMain.material.color.setRGB(2.4, 1.15, 0.72); if (lights[1]) lights[1].intensity = 3.2; storyHist.length = 0;
+      hero.visible = false; trail.visible = false; ringMain.material.color.setRGB(2.4, 1.15, 0.72); groups.get('window').mat.emissiveIntensity = 1.4; storyHist.length = 0;
     }
     composer.render();
     frames++;
@@ -358,5 +359,5 @@ export function startWorld(canvas, opts = {}) {
     const front = RC.clone().add(side).addScaledVector(RN, 7.5), through = RC.clone().add(side).addScaledVector(RN, -9);
     fly = { t0: performance.now(), dur: reduce ? 0.3 : (opts2.dur || 2.6), p0: camPos.clone(), p1: front, p2: through, l0: camLook.clone(), l2: RC.clone().add(side).addScaledVector(RN, -30), onFlash: opts2.onFlash, onDone: opts2.onDone };
   }
-  return { frame, flyIn, setStory: v => { story = v; }, setTarget: (pos, look) => { ext = pos ? { pos, look } : null; }, shots: SHOTS, setShot: (n, snap) => { if (!SHOTS[n]) return; shot = n; if (snap) { camPos.set(...SHOTS[n].pos); camLook.set(...SHOTS[n].look); } } };
+  return { info: () => renderer.info.render, frame, flyIn, setStory: v => { story = v; }, setTarget: (pos, look) => { ext = pos ? { pos, look } : null; }, shots: SHOTS, setShot: (n, snap) => { if (!SHOTS[n]) return; shot = n; if (snap) { camPos.set(...SHOTS[n].pos); camLook.set(...SHOTS[n].look); } } };
 }
