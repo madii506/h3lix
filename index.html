@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>H3LIX</title>
+<meta name="description" content="An autonomous agent on Solana Privacy Rings. Coins paired to $H3LIX send it their fees. It pays holders in private. Hold and it spirals.">
+<meta name="theme-color" content="#07060f">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icon-32.png?v=3">
+<link rel="apple-touch-icon" href="/assets/img/icon-180.png?v=3">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://h3lix.vercel.app/">
+<meta property="og:title" content="H3LIX">
+<meta property="og:description" content="Paid out in private. An agent on Solana Privacy Rings.">
+<meta property="og:image" content="https://h3lix.vercel.app/assets/img/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://h3lix.vercel.app/assets/img/og.png">
+<link rel="preload" href="/assets/fonts/disp.otf" as="font" type="font/otf" crossorigin>
+<link rel="stylesheet" href="/assets/css/base.css?v=3">
+<link rel="stylesheet" href="/assets/css/home.css?v=3">
+</head>
+<body class="home locked">
+<canvas id="world" aria-hidden="true"></canvas>
+<div class="shade" aria-hidden="true"></div>
+<canvas id="trail" aria-hidden="true"></canvas>
+<div class="progress" aria-hidden="true"><i id="prog"></i></div>
+
+<!-- the gate: name, connect, enter -->
+<div class="gate" id="gate">
+  <div class="gate-c">
+    <p class="kick mono"><i class="dot"></i>An agent on Solana Privacy Rings</p>
+    <h1 class="mark" id="mark"><span class="mark-txt">H3LIX</span><canvas class="mark-px" aria-hidden="true"></canvas></h1>
+    <p class="sub">Paid out in private.</p>
+    <div class="gbtns">
+      <div class="conn"><button class="btn ghost big mag" id="gConnect">Connect</button><div class="menu" id="gMenu" hidden></div></div>
+      <button class="btn big mag" id="gEnter">Enter <b>›</b></button>
+    </div>
+  </div>
+  <div class="ticker mono" aria-live="polite">
+    <span><i>SLOT</i><em data-live="slot">—</em></span>
+    <span><i>TPS</i><em data-live="tps">—</em></span>
+    <span><i>SOL</i><em data-live="sol">—</em></span>
+    <span><i>EPOCH</i><em data-live="epoch">—</em></span>
+    <span><i>RING</i><em data-live="ringstate">—</em></span>
+  </div>
+</div>
+<div class="flash" id="flash" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <a class="nbrand" href="#about" aria-label="Top"><img src="/assets/img/icon-32.png" alt="" width="20" height="20"></a>
+  <nav class="links" aria-label="Sections">
+    <a href="#loop">Loop</a><a href="#cycle">Cycle</a><a href="#spiral">Spiral</a><a href="#ring">Ring</a><a href="#live">Live</a><a href="#rollout">Rollout</a><a href="#faq">FAQ</a>
+  </nav>
+  <div class="navr">
+    <div class="conn"><button class="chip mono" id="nConnect">Connect</button><div class="menu" id="nMenu" hidden></div></div>
+    <a class="btn sm mag" href="/terminal" data-enter>Terminal <b>›</b></a>
+  </div>
+</header>
+
+<aside class="chapters mono" id="chapters" aria-label="Chapters">
+  <a href="#about"><i></i><span>Agent</span></a><a href="#loop"><i></i><span>Loop</span></a><a href="#cycle"><i></i><span>Cycle</span></a><a href="#spiral"><i></i><span>Spiral</span></a><a href="#ring"><i></i><span>Ring</span></a><a href="#live"><i></i><span>Live</span></a><a href="#console"><i></i><span>Terminal</span></a><a href="#rollout"><i></i><span>Rollout</span></a><a href="#faq"><i></i><span>FAQ</span></a>
+</aside>
+
+<main id="site">
+  <!-- 00: the statement, words light up as you scroll -->
+  <section class="pin words" id="about" data-cam="hero">
+    <div class="sticky">
+      <div class="wwrap">
+        <p class="eyebrow mono">00 — The agent</p>
+        <p class="bigtxt" id="bigtxt">H3LIX is an agent. It takes the fees of every coin paired to it, hides them inside a Privacy Ring and pays its holders in private. The longer they hold, the more it pays.</p>
+        <div class="scrollhint mono"><span></span>scroll</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="mrow"><span>Paid out in private</span><i></i><span>Hold and it spirals</span><i></i><span>Fees spiral in</span><i></i><span>An agent on Solana Privacy Rings</span><i></i><span>Paid out in private</span><i></i><span>Hold and it spirals</span><i></i><span>Fees spiral in</span><i></i><span>An agent on Solana Privacy Rings</span><i></i></div>
+    <div class="mrow rev mono"><span>$H3LIX</span><i></i><span>Pair · Feed · Shield · Pay</span><i></i><span>Amounts encrypted onchain</span><i></i><span>One signature to go private</span><i></i><span>$H3LIX</span><i></i><span>Pair · Feed · Shield · Pay</span><i></i><span>Amounts encrypted onchain</span><i></i><span>One signature to go private</span><i></i></div>
+  </div>
+
+  <!-- 01: the loop, pinned, slides sideways -->
+  <section class="pin hs" id="loop" data-cam="side">
+    <div class="sticky">
+      <div class="hshead"><p class="eyebrow mono">01 — The loop</p><h2 class="scr">Fees spiral in. Holders get paid.</h2><div class="hsbar"><i id="hsbar"></i></div></div>
+      <div class="hstrack" id="hstrack">
+        <article class="hpanel"><span class="hn mono">01</span><div class="pxbig px-pair"></div><h3>Pair</h3><p>A coin launches on pump.fun quoted in $H3LIX instead of SOL. Every trade of it moves $H3LIX.</p></article>
+        <article class="hpanel"><span class="hn mono">02</span><div class="pxbig px-feed"></div><h3>Feed</h3><p>Its creator fees are shared to the agent's wallet. Every paired coin feeds the same agent.</p></article>
+        <article class="hpanel"><span class="hn mono">03</span><div class="pxbig px-shield"></div><h3>Shield</h3><p>The agent deposits what it earned into a Privacy Ring, where balances are encrypted.</p></article>
+        <article class="hpanel"><span class="hn mono">04</span><div class="pxbig px-pay"></div><h3>Pay</h3><p>Each cycle it pays holders by weight. The chain sees a payment, not the amount.</p></article>
+        <article class="hpanel last"><span class="hn mono">∞</span><h3>Then again.</h3><p>Every hour. More pairs, more fees, bigger cycles. That is the spiral.</p><a class="btn ghost mag" href="#cycle">See a cycle ↓</a></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="window" id="w1" data-cam="ring" data-window>
+    <div class="wtext">
+      <p class="eyebrow mono rv">Inside the ring</p>
+      <h2 class="big rv scr">Every fee goes in.</h2>
+      <h2 class="big acc rv scr">Nothing comes out readable.</h2>
+    </div>
+  </section>
+
+  <section class="band" id="cycle" data-cam="ring">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow mono rv">02 — The cycle</p>
+        <h2 class="rv scr">One cycle, every hour.</h2>
+        <p class="body rv">On the hour the agent claims what paired coins earned, shields it, and pays every holder by weight. Then it syncs its private wallet and waits for the next hour.</p>
+        <ol class="clist mono rv" id="clist">
+          <li><b>01</b>Claim creator fees from every pair</li>
+          <li><b>02</b>Deposit them into the Privacy Ring</li>
+          <li><b>03</b>Snapshot holders and their spirals</li>
+          <li><b>04</b>Send one private transfer per batch</li>
+          <li><b>05</b>Sync, publish the cycle, sleep</li>
+        </ol>
+        <p class="clock mono rv">UTC <b id="utc">--:--:--</b> · next cycle at <b id="nextc">--:00</b> once the agent is live</p>
+      </div>
+      <div class="cwheel rv" aria-hidden="true">
+        <div class="wheel" id="wheel"><span>Claim</span><span>Shield</span><span>Snapshot</span><span>Pay</span><span>Sync</span><i class="hand"></i><b class="core mono">1h</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band alt" id="spiral" data-cam="side">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow mono rv">03 — The spiral</p>
+        <h2 class="rv scr">The longer you hold, the bigger your cut.</h2>
+        <p class="body rv">Your share of a cycle is your balance times your spiral. It starts at 1× and climbs every day you hold, up to 3× at day 30. Sell any and it starts over.</p>
+        <div class="calc rv" id="calc">
+          <label class="mono">Bag <output id="cAmtO">1,000,000</output> $H3LIX</label>
+          <input type="range" id="cAmt" min="0" max="100" value="50" aria-label="Bag size">
+          <label class="mono">Held <output id="cDayO">10</output> days</label>
+          <input type="range" id="cDay" min="0" max="45" value="10" aria-label="Days held">
+          <div class="calc-out">
+            <div><span class="mono">Spiral</span><strong id="cMul">1.67×</strong></div>
+            <div><span class="mono">Weight</span><strong id="cW">1.67M</strong></div>
+          </div>
+          <div class="bar" aria-hidden="true"><i id="cBar"></i><span class="mono">day 0</span><span class="mono">day 30 · 3×</span></div>
+        </div>
+      </div>
+      <div class="spiralviz rv" aria-hidden="true"><canvas id="spiralc"></canvas></div>
+    </div>
+  </section>
+
+  <!-- 04: the ring, the payment encrypts itself as you scroll -->
+  <section class="pin encsec" id="ring" data-cam="side">
+    <div class="sticky">
+      <div class="wrap">
+        <p class="eyebrow mono">04 — The ring</p>
+        <h2 class="scr">Paid through Solana Privacy Rings.</h2>
+        <p class="body">Scroll, and watch a payment go through the Ring.</p>
+        <div class="cipher" id="cipher">
+          <div class="crow"><span class="mono k">from</span><span class="mono v">the H3LIX agent</span><span class="mono t">public</span></div>
+          <div class="crow"><span class="mono k">to</span><span class="mono v">your wallet</span><span class="mono t">public</span></div>
+          <div class="crow"><span class="mono k">amount</span><span class="mono v enc" data-plain="your share of the cycle">your share of the cycle</span><span class="mono t" data-t>plain</span></div>
+          <div class="crow"><span class="mono k">asset</span><span class="mono v enc" data-plain="the fees the agent earned">the fees the agent earned</span><span class="mono t" data-t>plain</span></div>
+        </div>
+        <div class="encbar"><i id="encbar"></i><span class="mono" id="encstate">before the Ring</span></div>
+      </div>
+    </div>
+  </section>
+  <section class="band" id="ringcards" data-cam="side">
+    <div class="wrap">
+      <div class="cards">
+        <article class="card rv"><span class="num mono">A</span><h3>Encrypted amounts</h3><p>A Ring transfer hides the amount and the asset. Wallets stay public, what you got does not.</p></article>
+        <article class="card rv"><span class="num mono">B</span><h3>One signature</h3><p>Sign one message in the terminal to derive your private wallet. No seed leaves your browser.</p></article>
+        <article class="card rv"><span class="num mono">C</span><h3>Public fallback</h3><p>Holders who never register still get paid, as a plain withdrawal to their address.</p></article>
+      </div>
+      <p class="note rv">Privacy Rings is Helius's shielded pool, in alpha. H3LIX is an independent agent built on it, not a Helius product.</p>
+    </div>
+  </section>
+
+  <section class="window wr" id="w2" data-cam="town" data-window>
+    <div class="wtext right">
+      <p class="eyebrow mono rv">The town</p>
+      <h2 class="big rv scr">Every holder is a house.</h2>
+      <h2 class="big acc rv scr">The agent pays every door.</h2>
+    </div>
+  </section>
+
+  <section class="band alt" id="live" data-cam="town">
+    <div class="wrap">
+      <p class="eyebrow mono rv">05 — Live</p>
+      <h2 class="rv scr">Read from the chain, right now.</h2>
+      <div class="tiles">
+        <div class="tile rv"><span class="mono">Solana slot</span><strong data-live="slot" data-count>—</strong></div>
+        <div class="tile rv"><span class="mono">Transactions / s</span><strong data-live="tps" data-count>—</strong></div>
+        <div class="tile rv"><span class="mono">SOL price</span><strong data-live="sol">—</strong></div>
+        <div class="tile rv"><span class="mono">Ring indexer</span><strong data-live="indexer">—</strong></div>
+        <div class="tile rv"><span class="mono">Ring prover</span><strong data-live="prover">—</strong></div>
+        <div class="tile rv"><span class="mono">Agent</span><strong data-live="agent">—</strong></div>
+      </div>
+      <div class="epoch rv"><div class="mono"><span>Epoch <b data-live="epoch">—</b></span><span data-live="epochpct">—</span></div><div class="ebar"><i id="ebar"></i></div></div>
+      <p class="note mono rv">A dash means no reading yet, not zero.</p>
+    </div>
+  </section>
+
+  <section class="band" id="console" data-cam="end">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow mono rv">06 — The terminal</p>
+        <h2 class="rv scr">Everything runs from one terminal.</h2>
+        <p class="body rv">Connect, check your bag, derive your private wallet, check a pair, watch the agent, the Ring and the holders. Type commands or click.</p>
+        <div class="rv" style="margin-top:28px"><a class="btn mag" href="/terminal" data-enter>Enter terminal <b>›</b></a></div>
+      </div>
+      <div class="typer mono rv" id="typer" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- 07: rollout, the line fills as you scroll -->
+  <section class="band alt" id="rollout" data-cam="end">
+    <div class="wrap">
+      <p class="eyebrow mono rv">07 — Rollout</p>
+      <h2 class="rv scr">What is live, what is next.</h2>
+      <ol class="roll" id="roll">
+        <li class="rv done"><i></i><div><b>Site and terminal</b><span>Live wallet reads, Ring health, pair checks, holders.</span></div></li>
+        <li class="rv done"><i></i><div><b>Private wallet derivation</b><span>Works today, in your browser, with the Privacy Rings SDK.</span></div></li>
+        <li class="rv"><i></i><div><b>$H3LIX launch</b><span>The coin goes live on pump.fun.</span></div></li>
+        <li class="rv"><i></i><div><b>Agent wallet published</b><span>Its address goes up here and in the terminal.</span></div></li>
+        <li class="rv"><i></i><div><b>Pairs open</b><span>Coins quote in $H3LIX and share fees to the agent.</span></div></li>
+        <li class="rv"><i></i><div><b>First private cycle</b><span>When Privacy Rings runs on mainnet.</span></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="band" id="faq" data-cam="end">
+    <div class="wrap narrow">
+      <p class="eyebrow mono rv">08 — FAQ</p>
+      <h2 class="rv scr">Questions</h2>
+      <div class="faq">
+        <details class="rv"><summary>What is H3LIX?</summary><p>An autonomous agent. It collects creator fees from coins paired to $H3LIX, shields them in a Solana Privacy Ring and pays $H3LIX holders every cycle.</p></details>
+        <details class="rv"><summary>Is it part of Helius?</summary><p>No. H3LIX is independent. It uses Privacy Rings, the shielded pool Helius publishes as an open SDK.</p></details>
+        <details class="rv"><summary>How do I get paid in private?</summary><p>Open the terminal, connect your wallet and sign one message. That derives your private wallet; the agent pays it through the Ring.</p></details>
+        <details class="rv"><summary>What is the spiral?</summary><p>Your multiplier. It grows from 1× to 3× over 30 days of holding and resets when you sell.</p></details>
+        <details class="rv"><summary>How does a coin pair to $H3LIX?</summary><p>pump.fun lets a coin trade against another coin instead of SOL. A paired coin quotes in $H3LIX and shares its creator fees to the agent.</p></details>
+        <details class="rv"><summary>Can the agent touch my wallet?</summary><p>No. The site only asks you to connect and sign. Your keys and the derived private keys stay in your browser.</p></details>
+        <details class="rv"><summary>Why is the Ring on devnet?</summary><p>Privacy Rings is in alpha and runs on devnet first. Payouts switch to private as Helius brings it to mainnet; until then nothing is paid in its name.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="window end" id="enter" data-cam="end" data-window>
+    <div class="wrap center">
+      <img class="endpfp rv" src="/assets/img/mark.png" alt="" width="132" height="132">
+      <h2 class="big rv scr">The rig is running.</h2>
+      <a class="btn big mag rv" href="/terminal" data-enter>Enter terminal <b>›</b></a>
+    </div>
+  </section>
+</main>
+<div class="wipe" id="wipe" aria-hidden="true"></div>
+<script type="module" src="/assets/js/home.js?v=3"></script>
+</body>
+</html>

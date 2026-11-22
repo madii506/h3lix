@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>H3LIX — terminal</title>
+<meta name="theme-color" content="#07060f">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/img/icon-32.png?v=3">
+<link rel="apple-touch-icon" href="/assets/img/icon-180.png?v=3">
+<meta property="og:title" content="H3LIX terminal">
+<meta property="og:image" content="https://h3lix.vercel.app/assets/img/og.png">
+<link rel="stylesheet" href="/assets/css/base.css?v=3">
+<link rel="stylesheet" href="/assets/css/term.css?v=3">
+</head>
+<body class="term">
+<canvas id="bgpx" aria-hidden="true"></canvas>
+<header class="tbar">
+  <a class="brand" href="/" data-home aria-label="Back to the home page"><img src="/assets/img/icon-32.png" alt="" width="22" height="22"><span>H3LIX</span><em class="mono">terminal</em></a>
+  <nav class="tabs mono" id="tabs" role="tablist">
+    <button role="tab" data-tab="rig" class="on">Rig</button>
+    <button role="tab" data-tab="wallet">Wallet</button>
+    <button role="tab" data-tab="private">Private</button>
+    <button role="tab" data-tab="pairs">Pairs</button>
+    <button role="tab" data-tab="agent">Agent</button>
+    <button role="tab" data-tab="ring">Ring</button>
+    <button role="tab" data-tab="spiral">Spiral</button>
+    <button role="tab" data-tab="holders">Holders</button>
+    <button role="tab" data-tab="docs">Docs</button>
+  </nav>
+  <div class="conn"><button class="chip mono" id="connBtn">Connect wallet</button>
+    <div class="menu" id="connMenu" hidden></div>
+  </div>
+</header>
+
+<main class="tmain">
+  <section class="panes">
+    <!-- RIG -->
+    <div class="pane on" data-pane="rig">
+      <div class="phead"><p class="eyebrow mono">01 — Rig</p><h1>The rig</h1><p class="psub">Everything the agent runs on, read live.</p></div>
+      <div class="grid4">
+        <div class="stat"><span class="mono">Solana slot</span><strong data-live="slot">—</strong></div>
+        <div class="stat"><span class="mono">Tx / second</span><strong data-live="tps">—</strong></div>
+        <div class="stat"><span class="mono">SOL</span><strong data-live="sol">—</strong></div>
+        <div class="stat"><span class="mono">Privacy Rings</span><strong data-live="ringstate">—</strong></div>
+      </div>
+      <div class="epochrow mono"><span>Epoch <b data-live="epoch">—</b></span><div class="ebar"><i id="ebar"></i></div><span data-live="epochpct">—</span></div>
+      <div class="rigrow">
+        <div class="box drillbox">
+          <canvas id="drillc" aria-hidden="true"></canvas>
+          <div class="drillmeta mono">
+            <div><span>Agent</span><b data-live="agentstate">—</b></div>
+            <div><span>Next cycle</span><b id="cycle">—</b></div>
+            <div><span>Paired coins</span><b data-live="paircount">—</b></div>
+          </div>
+        </div>
+        <div class="box you">
+          <p class="eyebrow mono">You</p>
+          <ul class="checks mono" id="youList">
+            <li data-k="conn"><i></i>Wallet connected</li>
+            <li data-k="priv"><i></i>Private wallet derived</li>
+            <li data-k="bag"><i></i>Holding $H3LIX</li>
+          </ul>
+          <div class="row"><button class="btn sm" data-go="wallet">Connect</button><button class="btn sm ghost" data-go="private">Go private</button></div>
+        </div>
+      </div>
+    </div>
+    <!-- WALLET -->
+    <div class="pane" data-pane="wallet">
+      <div class="phead"><p class="eyebrow mono">02 — Wallet</p><h1>Your wallet</h1><p class="psub">Balances read from Solana mainnet. Nothing to approve here.</p></div>
+      <div class="box" id="walletBox">
+        <div class="empty" id="walletEmpty"><p>No wallet connected.</p><button class="btn" data-act="connect">Connect wallet</button></div>
+        <div id="walletFull" hidden>
+          <div class="addr mono"><span id="wAddr"></span><button class="mini mono" data-copy="wAddr">Copy</button><a class="mini mono" id="wScan" target="_blank" rel="noopener">Solscan ↗</a></div>
+          <div class="grid4">
+            <div class="stat"><span class="mono">SOL</span><strong id="wSol">—</strong></div>
+            <div class="stat"><span class="mono">Tokens held</span><strong id="wTok">—</strong></div>
+            <div class="stat"><span class="mono">$H3LIX</span><strong id="wH3">—</strong></div>
+            <div class="stat"><span class="mono">Spiral</span><strong id="wMul">—</strong></div>
+          </div>
+          <div class="row"><button class="btn sm ghost" data-act="refresh">Refresh</button><button class="btn sm ghost" data-act="disconnect">Disconnect</button></div>
+        </div>
+      </div>
+      <div class="box">
+        <p class="eyebrow mono">Scan any wallet</p>
+        <form class="scan" id="scanForm"><input class="mono" id="scanIn" placeholder="Paste a Solana address" autocomplete="off" spellcheck="false" aria-label="Solana address"><button class="btn sm" type="submit">Scan</button></form>
+        <div class="scanout mono" id="scanOut" aria-live="polite"></div>
+      </div>
+    </div>
+    <!-- PRIVATE -->
+    <div class="pane" data-pane="private">
+      <div class="phead"><p class="eyebrow mono">03 — Private</p><h1>Get paid in private</h1><p class="psub">One signature derives your Privacy Rings wallet. It happens in this tab; nothing secret is sent anywhere.</p></div>
+      <ol class="steps">
+        <li class="pstep" id="ps1"><span class="n mono">1</span><div><h3>Connect</h3><p>The wallet that holds your $H3LIX.</p><button class="btn sm" data-act="connect" id="ps1b">Connect wallet</button></div></li>
+        <li class="pstep" id="ps2"><span class="n mono">2</span><div><h3>Sign the key message</h3><p>Your wallet signs the Privacy Rings derivation message <code class="mono">TSPP/derive/v1</code>. It is not a transaction and costs nothing.</p><button class="btn sm" data-act="derive" id="ps2b">Sign and derive</button><p class="err mono" id="ps2e"></p></div></li>
+        <li class="pstep" id="ps3"><span class="n mono">3</span><div><h3>Your private wallet</h3><p>This shielded address is where the agent's Ring transfers land.</p><div class="addr mono long"><span id="pAddr">—</span><button class="mini mono" data-copy="pAddr">Copy</button></div></div></li>
+        <li class="pstep" id="ps4"><span class="n mono">4</span><div><h3>Publish it onchain</h3><p>Registration maps your Solana address to the private wallet so payouts can find it. It opens when the agent goes live; until then the agent cannot pay anyone.</p><button class="btn sm ghost" data-act="register" id="ps4b">Check registration</button><p class="err mono" id="ps4e"></p></div></li>
+      </ol>
+    </div>
+    <!-- PAIRS -->
+    <div class="pane" data-pane="pairs">
+      <div class="phead"><p class="eyebrow mono">04 — Pairs</p><h1>Paired coins</h1><p class="psub">Coins that quote in $H3LIX and share their creator fees to the agent.</p></div>
+      <div class="box"><div id="pairsList"><div class="empty"><p>Loading pairs…</p></div></div></div>
+      <div class="box">
+        <p class="eyebrow mono">Pair a coin</p>
+        <ol class="howto"><li>Create your coin on pump.fun and pick $H3LIX as the quote coin instead of SOL.</li><li>In fee sharing, add the agent's wallet.</li><li>Paste the coin's address below to check it.</li></ol>
+        <form class="scan" id="pairForm"><input class="mono" id="pairIn" placeholder="Coin address" autocomplete="off" spellcheck="false" aria-label="Coin address"><button class="btn sm" type="submit">Check coin</button></form>
+        <div class="scanout mono" id="pairOut" aria-live="polite"></div>
+        <div class="row"><a class="btn sm ghost" href="https://pump.fun/create" target="_blank" rel="noopener">Open pump.fun ↗</a></div>
+      </div>
+    </div>
+    <!-- AGENT -->
+    <div class="pane" data-pane="agent">
+      <div class="phead"><p class="eyebrow mono">05 — Agent</p><h1>The agent</h1><p class="psub">Its wallet and every move it makes, straight from the chain.</p></div>
+      <div class="box" id="agentBox"><div class="empty"><p>Loading…</p></div></div>
+    </div>
+    <!-- RING -->
+    <div class="pane" data-pane="ring">
+      <div class="phead"><p class="eyebrow mono">06 — Ring</p><h1>Privacy Rings</h1><p class="psub">The shielded pool the payouts run through. Measured from our server every time you open this.</p></div>
+      <div class="grid3" id="ringGrid">
+        <div class="stat"><span class="mono">Indexer</span><strong data-live="indexer">—</strong><em class="mono" data-live="indexerNote"></em></div>
+        <div class="stat"><span class="mono">Prover</span><strong data-live="prover">—</strong><em class="mono" data-live="proverNote"></em></div>
+        <div class="stat"><span class="mono">Dashboard</span><strong data-live="dashboard">—</strong><em class="mono" data-live="dashboardNote"></em></div>
+      </div>
+      <div class="box">
+        <p class="eyebrow mono">What a Ring payout hides</p>
+        <table class="tbl mono"><thead><tr><th></th><th>Public</th><th>Encrypted</th></tr></thead>
+          <tbody><tr><td>Sender (the agent)</td><td class="y">●</td><td></td></tr><tr><td>Recipient (you)</td><td class="y">●</td><td></td></tr><tr><td>Amount</td><td></td><td class="y">●</td></tr><tr><td>Asset</td><td></td><td class="y">●</td></tr></tbody></table>
+        <div class="row"><button class="btn sm ghost" data-act="ringcheck">Measure again</button><a class="btn sm ghost" href="https://www.npmjs.com/package/@heliuslabs/zolana" target="_blank" rel="noopener">SDK on npm ↗</a></div>
+      </div>
+    </div>
+    <!-- SPIRAL -->
+    <div class="pane" data-pane="spiral">
+      <div class="phead"><p class="eyebrow mono">07 — Spiral</p><h1>Your spiral</h1><p class="psub">Share of a cycle = bag × spiral. 1× on day 0, 3× from day 30. Selling resets it.</p></div>
+      <div class="box">
+        <form class="spform" id="spForm">
+          <label class="mono">Bag ($H3LIX)<input class="mono" id="spBag" inputmode="numeric" value="1000000"></label>
+          <label class="mono">Days held<input class="mono" id="spDays" inputmode="numeric" value="10"></label>
+          <button class="btn sm" type="submit">Compute</button>
+        </form>
+        <div class="grid3">
+          <div class="stat"><span class="mono">Spiral</span><strong id="spMul">—</strong></div>
+          <div class="stat"><span class="mono">Weight</span><strong id="spW">—</strong></div>
+          <div class="stat"><span class="mono">Day 30 weight</span><strong id="spW30">—</strong></div>
+        </div>
+        <table class="tbl mono"><thead><tr><th>Day</th><th>Spiral</th></tr></thead><tbody id="spTable"></tbody></table>
+      </div>
+    </div>
+    <!-- HOLDERS -->
+    <div class="pane" data-pane="holders">
+      <div class="phead"><p class="eyebrow mono">08 — Holders</p><h1>The holders</h1><p class="psub">The 20 largest $H3LIX accounts, read from Solana. Every one of them is a house the agent pays.</p></div>
+      <div class="box" id="holdersBox"><div class="empty"><p>Loading…</p></div></div>
+    </div>
+    <!-- DOCS -->
+    <div class="pane" data-pane="docs">
+      <div class="phead"><p class="eyebrow mono">09 — Docs</p><h1>man h3lix</h1><p class="psub">How the agent works, what it never does, and the honest limits.</p></div>
+      <div class="box man mono">
+        <h3>NAME</h3><p>h3lix — an autonomous agent that pays $H3LIX holders through Solana Privacy Rings.</p>
+        <h3>CYCLE</h3><p>Hourly, on the hour (UTC): claim creator fees from paired coins → deposit into the Ring → snapshot holders and spirals → one private transfer per batch of up to 15 holders → sync and publish.</p>
+        <h3>WEIGHT</h3><p>weight = balance × spiral. spiral = 1 + min(days held, 30) / 15. Selling any amount resets days held to 0.</p>
+        <h3>PRIVATE WALLET</h3><p>Your wallet signs the Solana off-chain message <code>TSPP/derive/v1</code>. The Privacy Rings SDK turns that signature into your shielded keys, in this tab. The keys are never sent anywhere; only the public shielded address is stored, in this browser.</p>
+        <h3>REGISTRATION</h3><p>A Ring transfer can only reach an owner who published a shielded address onchain. Holders who never do are paid as a plain public withdrawal instead.</p>
+        <h3>H3LIX NEVER</h3><p>asks for a seed phrase or private key · moves funds from your wallet · signs for you · shows a number it did not read.</p>
+        <h3>LIMITS</h3><p>Privacy Rings is alpha software on devnet. Private payouts start when it runs on mainnet; until then the agent pays nothing in its name. Ring transfers hide amount and asset, not who sent or received.</p>
+        <h3>SEE ALSO</h3><p><a href="https://www.npmjs.com/package/@heliuslabs/zolana" target="_blank" rel="noopener">@heliuslabs/zolana</a> · <a href="https://pump.fun" target="_blank" rel="noopener">pump.fun</a> · <a href="https://solscan.io" target="_blank" rel="noopener">solscan.io</a></p>
+      </div>
+    </div>
+  </section>
+
+  <aside class="console" aria-label="Console">
+    <div class="chead mono"><span><i class="dot"></i>console</span><button class="mini mono" data-act="clear">clear</button></div>
+    <div class="log mono" id="log" aria-live="polite"></div>
+    <form class="cmd mono" id="cmdForm"><span>h3lix&gt;</span><input id="cmd" autocomplete="off" spellcheck="false" aria-label="Command" placeholder="help"></form>
+  </aside>
+</main>
+<div class="toast mono" id="toast" role="status"></div>
+<div class="wipe" id="wipe" aria-hidden="true"></div>
+<script type="module" src="/assets/js/term.js?v=3"></script>
+</body>
+</html>
