@@ -99,8 +99,6 @@ W.onChange(renderConn); renderConn(); W.reconnect();
 const nav = $('#nav'), links = $$('.links a'), chaps = $$('.chapters a');
 function onScroll() {
   nav.classList.toggle('solid', scrollY > 40);
-  const max = document.documentElement.scrollHeight - innerHeight;
-  $('#prog').style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
   camByScroll(); scenes();
 }
 addEventListener('scroll', onScroll, { passive: true });
