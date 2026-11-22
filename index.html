@@ -17,31 +17,22 @@
 <meta name="twitter:image" content="https://h3lix.vercel.app/assets/img/og.png">
 <link rel="preload" href="/assets/fonts/disp.otf" as="font" type="font/otf" crossorigin>
 <link rel="stylesheet" href="/assets/css/base.css?v=3">
-<link rel="stylesheet" href="/assets/css/home.css?v=3">
+<link rel="stylesheet" href="/assets/css/home.css?v=4">
 </head>
 <body class="home locked">
 <canvas id="world" aria-hidden="true"></canvas>
 <div class="shade" aria-hidden="true"></div>
 <canvas id="trail" aria-hidden="true"></canvas>
-<div class="progress" aria-hidden="true"><i id="prog"></i></div>
 
 <!-- the gate: name, connect, enter -->
 <div class="gate" id="gate">
   <div class="gate-c">
-    <p class="kick mono"><i class="dot"></i>An agent on Solana Privacy Rings</p>
     <h1 class="mark" id="mark"><span class="mark-txt">H3LIX</span><canvas class="mark-px" aria-hidden="true"></canvas></h1>
     <p class="sub">Paid out in private.</p>
     <div class="gbtns">
       <div class="conn"><button class="btn ghost big mag" id="gConnect">Connect</button><div class="menu" id="gMenu" hidden></div></div>
       <button class="btn big mag" id="gEnter">Enter <b>›</b></button>
     </div>
-  </div>
-  <div class="ticker mono" aria-live="polite">
-    <span><i>SLOT</i><em data-live="slot">—</em></span>
-    <span><i>TPS</i><em data-live="tps">—</em></span>
-    <span><i>SOL</i><em data-live="sol">—</em></span>
-    <span><i>EPOCH</i><em data-live="epoch">—</em></span>
-    <span><i>RING</i><em data-live="ringstate">—</em></span>
   </div>
 </div>
 <div class="flash" id="flash" aria-hidden="true"></div>
@@ -249,6 +240,6 @@
   </section>
 </main>
 <div class="wipe" id="wipe" aria-hidden="true"></div>
-<script type="module" src="/assets/js/home.js?v=3"></script>
+<script type="module" src="/assets/js/home.js?v=4"></script>
 </body>
 </html>
