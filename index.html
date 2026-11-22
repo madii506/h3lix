@@ -17,7 +17,7 @@
 <meta name="twitter:image" content="https://h3lix.vercel.app/assets/img/og.png">
 <link rel="preload" href="/assets/fonts/disp.otf" as="font" type="font/otf" crossorigin>
 <link rel="stylesheet" href="/assets/css/base.css?v=3">
-<link rel="stylesheet" href="/assets/css/home.css?v=4">
+<link rel="stylesheet" href="/assets/css/home.css?v=5">
 </head>
 <body class="home locked">
 <canvas id="world" aria-hidden="true"></canvas>
@@ -49,7 +49,7 @@
 </header>
 
 <aside class="chapters mono" id="chapters" aria-label="Chapters">
-  <a href="#about"><i></i><span>Agent</span></a><a href="#loop"><i></i><span>Loop</span></a><a href="#cycle"><i></i><span>Cycle</span></a><a href="#spiral"><i></i><span>Spiral</span></a><a href="#ring"><i></i><span>Ring</span></a><a href="#live"><i></i><span>Live</span></a><a href="#console"><i></i><span>Terminal</span></a><a href="#rollout"><i></i><span>Rollout</span></a><a href="#faq"><i></i><span>FAQ</span></a>
+  <a href="#about"><i></i><span>Agent</span></a><a href="#loop"><i></i><span>Loop</span></a><a href="#follow"><i></i><span>One fee</span></a><a href="#cycle"><i></i><span>Cycle</span></a><a href="#spiral"><i></i><span>Spiral</span></a><a href="#ring"><i></i><span>Ring</span></a><a href="#live"><i></i><span>Live</span></a><a href="#console"><i></i><span>Terminal</span></a><a href="#rollout"><i></i><span>Rollout</span></a><a href="#card"><i></i><span>Card</span></a><a href="#faq"><i></i><span>FAQ</span></a>
 </aside>
 
 <main id="site">
@@ -79,6 +79,22 @@
         <article class="hpanel"><span class="hn mono">03</span><div class="pxbig px-shield"></div><h3>Shield</h3><p>The agent deposits what it earned into a Privacy Ring, where balances are encrypted.</p></article>
         <article class="hpanel"><span class="hn mono">04</span><div class="pxbig px-pay"></div><h3>Pay</h3><p>Each cycle it pays holders by weight. The chain sees a payment, not the amount.</p></article>
         <article class="hpanel last"><span class="hn mono">∞</span><h3>Then again.</h3><p>Every hour. More pairs, more fees, bigger cycles. That is the spiral.</p><a class="btn ghost mag" href="#cycle">See a cycle ↓</a></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- follow one fee: the camera rides a single fee from a coin, through the ring, to a holder's door -->
+  <section class="pin story" id="follow" data-cam="ring">
+    <div class="sticky">
+      <div class="scap">
+        <p class="eyebrow mono">Follow one fee</p>
+        <div class="steps4">
+          <div class="s4" data-s="0"><b class="mono">01</b><h2>A trade on a paired coin pays a fee.</h2></div>
+          <div class="s4" data-s="1"><b class="mono">02</b><h2>The fee spirals into the agent.</h2></div>
+          <div class="s4" data-s="2"><b class="mono">03</b><h2>Inside the Ring, it is encrypted.</h2></div>
+          <div class="s4" data-s="3"><b class="mono">04</b><h2>It lands at a holder's door. Only they know how much.</h2></div>
+        </div>
+        <div class="sdots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       </div>
     </div>
   </section>
@@ -215,9 +231,25 @@
     </div>
   </section>
 
+  <section class="band alt" id="card" data-cam="end">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow mono rv">08 — Your card</p>
+        <h2 class="rv scr">Make your holder card.</h2>
+        <p class="body rv">Connect, and the site draws a card for your wallet. Download it or post it. Nothing is signed and nothing leaves your browser except the post you choose to make.</p>
+        <div class="row rv" style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap">
+          <div class="conn"><button class="btn mag" id="cardConnect">Connect wallet</button><div class="menu" id="cMenu" hidden></div></div>
+          <button class="btn ghost mag" id="cardDl" disabled>Download PNG</button>
+          <a class="btn ghost mag" id="cardX" href="#" target="_blank" rel="noopener" aria-disabled="true">Post on X</a>
+        </div>
+      </div>
+      <div class="cardwrap rv"><canvas id="cardc" width="1200" height="675" aria-label="Your H3LIX holder card"></canvas></div>
+    </div>
+  </section>
+
   <section class="band" id="faq" data-cam="end">
     <div class="wrap narrow">
-      <p class="eyebrow mono rv">08 — FAQ</p>
+      <p class="eyebrow mono rv">09 — FAQ</p>
       <h2 class="rv scr">Questions</h2>
       <div class="faq">
         <details class="rv"><summary>What is H3LIX?</summary><p>An autonomous agent. It collects creator fees from coins paired to $H3LIX, shields them in a Solana Privacy Ring and pays $H3LIX holders every cycle.</p></details>
@@ -240,6 +272,6 @@
   </section>
 </main>
 <div class="wipe" id="wipe" aria-hidden="true"></div>
-<script type="module" src="/assets/js/home.js?v=4"></script>
+<script type="module" src="/assets/js/home.js?v=5"></script>
 </body>
 </html>
