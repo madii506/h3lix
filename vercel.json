@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "rewrites": [{ "source": "/terminal", "destination": "/terminal.html" }],
+  "headers": [
+    { "source": "/assets/(.*)", "headers": [{ "key": "cache-control", "value": "public, max-age=3600, stale-while-revalidate=86400" }] },
+    { "source": "/(.*)", "headers": [{ "key": "x-content-type-options", "value": "nosniff" }, { "key": "referrer-policy", "value": "strict-origin-when-cross-origin" }] }
+  ]
+}
