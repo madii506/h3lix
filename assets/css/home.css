@@ -325,3 +325,53 @@ body:not(.locked) .nav{animation:navIn .8s .2s cubic-bezier(.2,.8,.2,1) backward
 .cardwrap canvas{width:100%;height:auto;display:block;box-shadow:0 0 0 1px var(--line),0 40px 90px -40px rgba(255,90,50,.5)}
 a.btn[aria-disabled=true]{opacity:.45;pointer-events:none}
 @media (max-width:900px){.story{height:440vh}.scap{padding:0 16px 10vh}}
+/* ---- polish 1 ---- */
+/* bands dissolve into the world at their top edge, like the drill's shank; no hairlines */
+.band{border-top:0;background:linear-gradient(180deg,rgba(9,7,17,.88),rgba(9,7,17,.8));overflow:visible}
+.band.alt{background:linear-gradient(180deg,rgba(13,10,25,.9),rgba(13,10,25,.82))}
+.band::before{content:'';position:absolute;left:0;right:0;top:-47px;height:48px;background:url(/assets/img/dissolve.png) repeat-x;background-size:384px 48px;pointer-events:none;image-rendering:pixelated}
+.band.alt::before{filter:brightness(1.5)}
+/* ghost chapter numbers drifting behind each band */
+.band[data-n]::after{content:attr(data-n);position:absolute;right:3vw;top:var(--gy,40px);font:600 clamp(160px,24vw,380px)/.8 Disp;letter-spacing:-.06em;color:transparent;-webkit-text-stroke:1px rgba(255,90,50,.16);pointer-events:none;z-index:0;transition:top .1s linear}
+.band>.wrap{position:relative;z-index:1}
+/* ghost buttons read on any background */
+.btn.ghost{background:rgba(7,6,15,.45);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+@media (pointer:coarse){input[type=range]{height:44px}}
+/* the end frames the ring like the gate */
+.window.end .wrap.center{padding-top:4vh}
+.window.end h2.big{font-size:clamp(46px,7.4vw,112px)}
+.endsub{margin:10px 0 30px}
+/* loop panels: big ghost numbers, bigger pixel icons */
+.hpanel{overflow:hidden}
+.hpanel .hn{font:600 clamp(110px,10vw,170px)/.8 Disp;letter-spacing:-.05em;color:transparent;-webkit-text-stroke:1px rgba(255,90,50,.35);top:18px;right:22px}
+.hpanel.on .hn{-webkit-text-stroke-color:rgba(255,90,50,.8)}
+.hpanel.last .hn{-webkit-text-stroke-color:rgba(20,8,4,.5)}
+.pxbig{transform:scale(2.3);top:44px;left:44px}
+/* typer never looks empty */
+.typer{min-height:0;height:300px;overflow:hidden}
+/* rollout + dial */
+.rollwrap{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:center}
+.dial{position:relative;width:min(340px,70vw);aspect-ratio:1;justify-self:center}
+.dring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--acc) 0 calc(var(--dp,0) * 1%),rgba(232,230,250,.08) calc(var(--dp,0) * 1%) 100%);-webkit-mask:radial-gradient(circle,transparent 62%,#000 63%);mask:radial-gradient(circle,transparent 62%,#000 63%);transition:--dp 1.4s}
+.dring::after{content:'';position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(rgba(7,6,15,1) 0 1.2deg,transparent 1.2deg 12deg)}
+.dtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.dtxt strong{font-size:clamp(40px,5vw,64px);color:var(--ink)}
+.dtxt span{font-size:11px;text-transform:uppercase;color:var(--faint)}
+/* faq split */
+.faqsplit{grid-template-columns:.8fr 1.2fr;align-items:start}
+.faqsplit .faq{margin-top:0}
+.faqhead{position:sticky;top:110px}
+.acc2{color:var(--acc2)}
+@media (max-width:900px){
+  .band::before{top:-31px;height:32px;background-size:256px 32px}
+  .band[data-n]::after{font-size:150px;right:8px}
+  .rollwrap{grid-template-columns:1fr}
+  .faqsplit{grid-template-columns:1fr}
+  .faqhead{position:static}
+  .pxbig{transform:scale(1.7);top:30px;left:30px}
+}
+/* grids draw their own lines, so nothing grey shows before the tiles fade in */
+.tiles,.cards{background:none!important;gap:0!important}
+.tile,.card{box-shadow:inset 0 0 0 .5px rgba(232,230,250,.14)}
+.rv{transition-duration:.75s}
+.dring{transition:none}
