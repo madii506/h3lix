@@ -16,8 +16,9 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://h3lix.vercel.app/assets/img/og.png">
 <link rel="preload" href="/assets/fonts/disp.otf" as="font" type="font/otf" crossorigin>
+<link rel="preload" href="/assets/fonts/pix.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="/assets/css/base.css?v=3">
-<link rel="stylesheet" href="/assets/css/home.css?v=6">
+<link rel="stylesheet" href="/assets/css/home.css?v=8">
 </head>
 <body class="home locked">
 <canvas id="world" aria-hidden="true"></canvas>
@@ -28,7 +29,6 @@
 <div class="gate" id="gate">
   <div class="gate-c">
     <h1 class="mark" id="mark"><span class="mark-txt">H3LIX</span><canvas class="mark-px" aria-hidden="true"></canvas></h1>
-    <p class="sub">Paid out in private.</p>
     <div class="gbtns">
       <div class="conn"><button class="btn ghost big mag" id="gConnect">Connect</button><div class="menu" id="gMenu" hidden></div></div>
       <button class="btn big mag" id="gEnter">Enter <b>›</b></button>
@@ -59,7 +59,6 @@
       <div class="wwrap">
         <p class="eyebrow mono">00 — The agent</p>
         <p class="bigtxt" id="bigtxt">H3LIX is an agent. It takes the fees of every coin paired to it, hides them inside a Privacy Ring and pays its holders in private. The longer they hold, the more it pays.</p>
-        <div class="scrollhint mono"><span></span>scroll</div>
       </div>
     </div>
   </section>
@@ -153,7 +152,7 @@
   <!-- 04: the ring, the payment encrypts itself as you scroll -->
   <section class="pin encsec" id="ring" data-cam="side">
     <div class="sticky">
-      <div class="wrap">
+      <div class="wrap encgrid"><div class="enccol">
         <p class="eyebrow mono">04 — The ring</p>
         <h2 class="scr">Paid through Solana Privacy Rings.</h2>
         <p class="body">Scroll, and watch a payment go through the Ring.</p>
@@ -164,6 +163,12 @@
           <div class="crow"><span class="mono k">asset</span><span class="mono v enc" data-plain="the fees the agent earned">the fees the agent earned</span><span class="mono t" data-t>plain</span></div>
         </div>
         <div class="encbar"><i id="encbar"></i><span class="mono" id="encstate">before the Ring</span></div>
+      </div>
+      <div class="passvis" id="passvis" aria-hidden="true">
+        <div class="pring"></div><div class="ptrail"></div><div class="ptrail enc"></div>
+        <i class="pcube" id="pcube"><em class="mono" id="pcl">your share</em></i>
+        <span class="plabel l mono">public</span><span class="plabel r mono">private</span>
+      </div>
       </div>
     </div>
   </section>
@@ -273,12 +278,11 @@
   <section class="window end" id="enter" data-cam="gate" data-window>
     <div class="wrap center">
       <h2 class="big rv scr">The rig is running.</h2>
-      <p class="sub endsub rv">Paid out in private.</p>
       <a class="btn big mag rv" href="/terminal" data-enter>Enter terminal <b>›</b></a>
     </div>
   </section>
 </main>
 <div class="wipe" id="wipe" aria-hidden="true"></div>
-<script type="module" src="/assets/js/home.js?v=6"></script>
+<script type="module" src="/assets/js/home.js?v=8"></script>
 </body>
 </html>
