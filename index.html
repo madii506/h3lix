@@ -17,7 +17,7 @@
 <meta name="twitter:image" content="https://h3lix.vercel.app/assets/img/og.png">
 <link rel="preload" href="/assets/fonts/disp.otf" as="font" type="font/otf" crossorigin>
 <link rel="stylesheet" href="/assets/css/base.css?v=3">
-<link rel="stylesheet" href="/assets/css/home.css?v=5">
+<link rel="stylesheet" href="/assets/css/home.css?v=6">
 </head>
 <body class="home locked">
 <canvas id="world" aria-hidden="true"></canvas>
@@ -107,7 +107,7 @@
     </div>
   </section>
 
-  <section class="band" id="cycle" data-cam="ring">
+  <section class="band" id="cycle" data-n="02" data-cam="ring">
     <div class="wrap split">
       <div>
         <p class="eyebrow mono rv">02 — The cycle</p>
@@ -128,7 +128,7 @@
     </div>
   </section>
 
-  <section class="band alt" id="spiral" data-cam="side">
+  <section class="band alt" id="spiral" data-n="03" data-cam="side">
     <div class="wrap split">
       <div>
         <p class="eyebrow mono rv">03 — The spiral</p>
@@ -186,7 +186,7 @@
     </div>
   </section>
 
-  <section class="band alt" id="live" data-cam="town">
+  <section class="band alt" id="live" data-n="05" data-cam="town">
     <div class="wrap">
       <p class="eyebrow mono rv">05 — Live</p>
       <h2 class="rv scr">Read from the chain, right now.</h2>
@@ -203,7 +203,7 @@
     </div>
   </section>
 
-  <section class="band" id="console" data-cam="end">
+  <section class="band" id="console" data-n="06" data-cam="end">
     <div class="wrap split">
       <div>
         <p class="eyebrow mono rv">06 — The terminal</p>
@@ -216,10 +216,11 @@
   </section>
 
   <!-- 07: rollout, the line fills as you scroll -->
-  <section class="band alt" id="rollout" data-cam="end">
+  <section class="band alt" id="rollout" data-n="07" data-cam="end">
     <div class="wrap">
       <p class="eyebrow mono rv">07 — Rollout</p>
       <h2 class="rv scr">What is live, what is next.</h2>
+      <div class="rollwrap">
       <ol class="roll" id="roll">
         <li class="rv done"><i></i><div><b>Site and terminal</b><span>Live wallet reads, Ring health, pair checks, holders.</span></div></li>
         <li class="rv done"><i></i><div><b>Private wallet derivation</b><span>Works today, in your browser, with the Privacy Rings SDK.</span></div></li>
@@ -228,10 +229,12 @@
         <li class="rv"><i></i><div><b>Pairs open</b><span>Coins quote in $H3LIX and share fees to the agent.</span></div></li>
         <li class="rv"><i></i><div><b>First private cycle</b><span>When Privacy Rings runs on mainnet.</span></div></li>
       </ol>
+      <div class="dial rv" aria-hidden="true"><div class="dring" id="dring"></div><div class="dtxt"><strong class="mono" id="dnum">2/6</strong><span class="mono">milestones live</span></div></div>
+      </div>
     </div>
   </section>
 
-  <section class="band alt" id="card" data-cam="end">
+  <section class="band alt" id="card" data-n="08" data-cam="end">
     <div class="wrap split">
       <div>
         <p class="eyebrow mono rv">08 — Your card</p>
@@ -247,10 +250,14 @@
     </div>
   </section>
 
-  <section class="band" id="faq" data-cam="end">
-    <div class="wrap narrow">
-      <p class="eyebrow mono rv">09 — FAQ</p>
-      <h2 class="rv scr">Questions</h2>
+  <section class="band" id="faq" data-n="09" data-cam="end">
+    <div class="wrap split faqsplit">
+      <div class="faqhead">
+        <p class="eyebrow mono rv">09 — FAQ</p>
+        <h2 class="rv scr">Questions</h2>
+        <p class="body rv">The long version lives in the terminal: type <span class="mono acc2">man</span> or open Docs.</p>
+        <a class="btn ghost mag rv" href="/terminal#docs" data-enter style="margin-top:24px">Read the docs ›</a>
+      </div>
       <div class="faq">
         <details class="rv"><summary>What is H3LIX?</summary><p>An autonomous agent. It collects creator fees from coins paired to $H3LIX, shields them in a Solana Privacy Ring and pays $H3LIX holders every cycle.</p></details>
         <details class="rv"><summary>Is it part of Helius?</summary><p>No. H3LIX is independent. It uses Privacy Rings, the shielded pool Helius publishes as an open SDK.</p></details>
@@ -263,15 +270,15 @@
     </div>
   </section>
 
-  <section class="window end" id="enter" data-cam="end" data-window>
+  <section class="window end" id="enter" data-cam="gate" data-window>
     <div class="wrap center">
-      <img class="endpfp rv" src="/assets/img/mark.png" alt="" width="132" height="132">
       <h2 class="big rv scr">The rig is running.</h2>
+      <p class="sub endsub rv">Paid out in private.</p>
       <a class="btn big mag rv" href="/terminal" data-enter>Enter terminal <b>›</b></a>
     </div>
   </section>
 </main>
 <div class="wipe" id="wipe" aria-hidden="true"></div>
-<script type="module" src="/assets/js/home.js?v=5"></script>
+<script type="module" src="/assets/js/home.js?v=6"></script>
 </body>
 </html>
