@@ -10,16 +10,17 @@ wipeIn();
 
 // ---------- the world ----------
 const canvas = $('#world');
-let world = null, windowOn = true, entered = false;
+let world = null, windowOn = true, entered = false, winCount = 1;
 try {
   if (/[?&]noworld/.test(location.search)) throw new Error('off');
-  world = startWorld(canvas, { startShot: 'gate', active: () => (!entered || windowOn ? 1 : 0.3) });
+  world = startWorld(canvas, { startShot: 'gate', active: () => (!entered || winCount > 0 ? 1 : 0) });
 } catch (e) { canvas.style.background = 'radial-gradient(circle at 70% 45%,#3a1a2a,#07060f 60%)'; }
 window.__h3 = () => world && world.info();
 
 // ---------- scroll-scrubbed camera: each section names a shot, the camera glides between them ----------
 let anchors = [];
 function measure() {
+  if (typeof measureScenes === 'function' && entered) measureScenes();
   anchors = $$('[data-cam]').map(el => {
     const r = el.getBoundingClientRect(), top = r.top + scrollY;
     return { y: top + Math.min(r.height, innerHeight * 1.6) / 2 - innerHeight / 2, shot: el.dataset.cam, win: el.hasAttribute('data-window') || el.classList.contains('words') };
@@ -38,6 +39,9 @@ function camByScroll() {
   windowOn = (t < 0.5 ? A : B).win;
 }
 addEventListener('resize', () => { measure(); camByScroll(); });
+
+const winIO = new IntersectionObserver(es => { for (const e of es) e.target.__on = e.isIntersecting; winCount = $$('[data-window], #about, #follow').filter(el => el.__on).length; }, { rootMargin: '10% 0px 10% 0px' });
+$$('[data-window], #about, #follow').forEach(el => winIO.observe(el));
 
 // ---------- the gate: H3LIX, Connect, Enter ----------
 const gate = $('#gate'), flash = $('#flash');
@@ -127,7 +131,7 @@ function scramble(el) {
   const nodes = []; const walk = n => { for (const c of [...n.childNodes]) { if (c.nodeType === 3 && c.textContent.trim()) nodes.push(c); else if (c.nodeType === 1 && !c.classList.contains('w')) walk(c); } };
   walk(el);
   const items = nodes.map(n => ({ n, txt: n.textContent })); const total = items.reduce((a, i) => a + i.txt.length, 0) || 1;
-  const t0 = performance.now(), dur = 650 + total * 12;
+  const t0 = performance.now(), dur = 360 + total * 6;
   const tick = now => {
     const k = (now - t0) / dur; let idx = 0;
     for (const it of items) { let out = ''; for (const ch of it.txt) { const at = idx++ / total; out += ch === ' ' ? ' ' : (k > at * 0.8 + 0.2 ? ch : GLYPHS[(Math.random() * GLYPHS.length) | 0]); } it.n.textContent = out; }
@@ -136,7 +140,7 @@ function scramble(el) {
   requestAnimationFrame(tick);
 }
 const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && entered) { e.target.classList.add('vis'); if (e.target.classList.contains('scr')) scramble(e.target); io.unobserve(e.target); } }), { threshold: 0.12 });
-$$('main section').forEach(sec => sec.querySelectorAll('.rv, .scr').forEach((el, i) => { el.style.setProperty('--d', (i * 0.07).toFixed(2) + 's'); io.observe(el); }));
+$$('main section').forEach(sec => sec.querySelectorAll('.rv, .scr').forEach((el, i) => { el.style.setProperty('--d', (i * 0.04).toFixed(2) + 's'); io.observe(el); }));
 function revealCheck() { setTimeout(() => $$('.rv, .scr').forEach(el => { const r = el.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) { el.classList.add('vis'); if (el.classList.contains('scr')) scramble(el); } }), 200); }
 
 // ---------- pinned scenes, driven by scroll ----------
@@ -149,56 +153,69 @@ const encSec = $('#ring'), encRows = $$('#cipher .enc'), encTs = $$('#cipher [da
 const HEX = '0123456789abcdef';
 const roll = $('#roll');
 let lastEncK = -1, dialSet = false;
-const nBands = $$('.band[data-n]');
 function animDial(to) { const el = $('#dring'); const t0 = performance.now(); const tick = now => { const k = Math.min(1, (now - t0) / 1400), e = 1 - Math.pow(1 - k, 3); el.style.setProperty('--dp', (to * e).toFixed(2)); if (k < 1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
-let lastY = scrollY, lastT = performance.now(), sv = 0;
+// section geometry is measured once (and on resize), never inside the scroll frame
+const geo = {};
+function measureScenes() {
+  for (const id of ['about', 'loop', 'follow', 'ring', 'roll', 'wheel']) {
+    const el = document.getElementById(id); if (!el) continue;
+    const r = el.getBoundingClientRect(); geo[id] = { top: r.top + scrollY, h: r.height };
+  }
+  geo.maxX = Math.max(0, track.scrollWidth - innerWidth);
+}
+addEventListener('resize', measureScenes);
+const pin = id => { const g = geo[id]; return g ? clamp((scrollY - g.top) / Math.max(1, g.h - innerHeight)) : 0; };
+const near = id => { const g = geo[id]; return g && scrollY + innerHeight * 1.5 > g.top && scrollY - innerHeight * 0.5 < g.top + g.h; };
+const last = {};
+const put = (key, v, fn) => { if (last[key] !== v) { last[key] = v; fn(v); } };
 function scenes() {
   if (!entered) return;
+  if (!geo.about) measureScenes();
   // follow one fee
-  const fs = $('#follow'), fr = fs.getBoundingClientRect();
-  const inStory = fr.top <= 1 && fr.bottom >= innerHeight - 1;
-  const kf = prog(fs);
-  if (world) world.setStory(inStory ? kf : null);
-  const step = Math.min(3, Math.floor(kf * 4));
-  $$('.s4').forEach((el, i) => el.classList.toggle('on', inStory && i === step));
-  $$('.sdots i').forEach((el, i) => el.classList.toggle('on', i <= step && inStory));
-  // scroll speed bends the marquee and the big lines
-  const now = performance.now(), dy = scrollY - lastY, dtt = Math.max(16, now - lastT); lastY = scrollY; lastT = now;
-  sv = clamp(sv * 0.6 + (dy / dtt) * 6, -14, 14);
-  document.documentElement.style.setProperty('--sv', sv.toFixed(2));
-  document.documentElement.style.setProperty('--mx', (scrollY * -0.35).toFixed(1));
-  const k1 = prog($('#about'));
-  const n = Math.round(k1 * 1.15 * words.length);
-  words.forEach((w, i) => w.classList.toggle('on', i < n));
-  const k2 = prog(hsSec);
-  const maxX = Math.max(0, track.scrollWidth - innerWidth);
-  track.style.transform = `translate3d(${(-k2 * maxX).toFixed(1)}px,0,0)`;
-  $('#hsbar').style.width = (k2 * 100) + '%';
-  const center = innerWidth / 2; panels.forEach(p => { const r = p.getBoundingClientRect(); p.classList.toggle('on', r.left < center && r.right > center); });
-  const k3 = prog(encSec);
-  if (Math.abs(k3 - lastEncK) > 0.004) {
-    lastEncK = k3;
-    encRows.forEach((el, i) => {
-      const plain = el.dataset.plain, kk = clamp((k3 - 0.15 - i * 0.12) / 0.45);
-      const cut = Math.floor(kk * plain.length); let s = '';
-      for (let c = 0; c < plain.length; c++) s += c < cut ? HEX[(Math.random() * 16) | 0] : plain[c];
-      el.textContent = kk >= 1 ? '0x' + s.slice(0, 22) : s;
-      encTs[i].textContent = kk >= 1 ? 'encrypted' : kk > 0 ? 'encrypting…' : 'plain'; encTs[i].classList.toggle('enc-on', kk > 0);
-    });
-    $('#encbar').style.width = (k3 * 100) + '%';
-    const kp = clamp((k3 - 0.08) / 0.84), pv = $('#passvis');
-    pv.style.setProperty('--k', kp.toFixed(4)); pv.style.setProperty('--flare', Math.max(0, 1 - Math.abs(kp - 0.5) / 0.12).toFixed(3));
-    $('#pcube').classList.toggle('enc', kp > 0.5);
-    $('#pcl').textContent = kp > 0.5 ? '0x' + [...Array(8)].map(() => HEX[(Math.random() * 16) | 0]).join('') : 'your share';
-    $('#encstate').textContent = k3 < 0.15 ? 'before the Ring' : k3 < 0.85 ? 'inside the Ring' : 'what the chain sees';
+  if (near('follow')) {
+    const g = geo.follow, inStory = scrollY >= g.top - 1 && scrollY <= g.top + g.h - innerHeight + 1, kf = pin('follow');
+    if (world) world.setStory(inStory ? kf : null);
+    const step = inStory ? Math.min(3, Math.floor(kf * 4)) : -1;
+    put('step', step, v => { $$('.s4').forEach((el, i) => el.classList.toggle('on', i === v)); $$('.sdots i').forEach((el, i) => el.classList.toggle('on', v >= 0 && i <= v)); });
+  } else if (last.storyOff !== true) { last.storyOff = true; if (world) world.setStory(null); }
+  if (near('follow')) last.storyOff = false;
+  // the statement lights up word by word
+  if (near('about')) put('words', Math.round(pin('about') * 1.15 * words.length), n => words.forEach((w, i) => w.classList.toggle('on', i < n)));
+  // the loop slides sideways
+  if (near('loop')) {
+    const k2 = pin('loop');
+    track.style.transform = `translate3d(${(-k2 * geo.maxX).toFixed(1)}px,0,0)`;
+    $('#hsbar').style.transform = `scaleX(${k2.toFixed(4)})`;
+    put('panel', Math.round(k2 * (panels.length - 1)), a => panels.forEach((p, i) => p.classList.toggle('on', i === a)));
   }
-  for (const b of nBands) { const r = b.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) continue; b.style.setProperty('--gy', ((r.top - innerHeight * 0.3) * -0.18).toFixed(0) + 'px'); }
-  const rr = roll.getBoundingClientRect();
-  const done = $$('#roll li.done').length, all = $$('#roll li').length;
-  if (rr.top < innerHeight * 0.85 && !dialSet) { dialSet = true; animDial(done / all * 100); $('#dnum').textContent = done + '/' + all; }
-  roll.style.setProperty('--fill', (clamp((innerHeight * 0.7 - rr.top) / rr.height) * 100) + '%');
-  const wh = $('#wheel'); const wr = wh.getBoundingClientRect();
-  if (wr.bottom > 0 && wr.top < innerHeight) wh.style.rotate = ((wr.top / innerHeight) * -40).toFixed(1) + 'deg';
+  // a payment encrypts itself
+  if (near('ring')) {
+    const k3 = pin('ring');
+    if (Math.abs(k3 - lastEncK) > 0.006) {
+      lastEncK = k3;
+      encRows.forEach((el, i) => {
+        const plain = el.dataset.plain, kk = clamp((k3 - 0.15 - i * 0.12) / 0.45);
+        const cut = Math.floor(kk * plain.length); let s = '';
+        for (let c = 0; c < plain.length; c++) s += c < cut ? HEX[(Math.random() * 16) | 0] : plain[c];
+        el.textContent = kk >= 1 ? '0x' + s.slice(0, 22) : s;
+        put('t' + i, kk >= 1 ? 2 : kk > 0 ? 1 : 0, v => { encTs[i].textContent = ['plain', 'encrypting…', 'encrypted'][v]; encTs[i].classList.toggle('enc-on', v > 0); });
+      });
+      $('#encbar').style.transform = `scaleX(${k3.toFixed(4)})`;
+      const kp = clamp((k3 - 0.08) / 0.84), pv = $('#passvis');
+      pv.style.setProperty('--k', kp.toFixed(4)); pv.style.setProperty('--flare', Math.max(0, 1 - Math.abs(kp - 0.5) / 0.12).toFixed(3));
+      put('penc', kp > 0.5, v => $('#pcube').classList.toggle('enc', v));
+      if (kp > 0.5) $('#pcl').textContent = '0x' + [...Array(8)].map(() => HEX[(Math.random() * 16) | 0]).join(''); else put('pcl', 1, () => { $('#pcl').textContent = 'your share'; });
+      if (kp > 0.5) last.pcl = 0;
+      put('encstate', k3 < 0.15 ? 0 : k3 < 0.85 ? 1 : 2, v => { $('#encstate').textContent = ['before the Ring', 'inside the Ring', 'what the chain sees'][v]; });
+    }
+  }
+  // the rollout line fills, the dial turns once
+  if (near('roll')) {
+    const g = geo.roll, top = g.top - scrollY;
+    if (top < innerHeight * 0.85 && !dialSet) { dialSet = true; const done = $$('#roll li.done').length, all = $$('#roll li').length; animDial(done / all * 100); $('#dnum').textContent = done + '/' + all; }
+    roll.style.setProperty('--fill', (clamp((innerHeight * 0.7 - top) / g.h) * 100).toFixed(1) + '%');
+  }
+  if (near('wheel')) $('#wheel').style.rotate = (((geo.wheel.top - scrollY) / innerHeight) * -40).toFixed(1) + 'deg';
 }
 
 // ---------- the wordmark assembles from coral pixels ----------
@@ -376,7 +393,6 @@ live(); setInterval(() => { if (!document.hidden) live(); }, 15000);
 
 // back from the terminal (or a deep link): skip the gate
 let came = false; try { came = sessionStorage.getItem('h3lix:in') === '1'; } catch (e) {}
-(function settle() { requestAnimationFrame(settle); if (Math.abs(sv) > 0.05) { sv *= 0.86; document.documentElement.style.setProperty('--sv', sv.toFixed(2)); } })();
 measure(); onScroll();
 if (came || location.hash.length > 1 || /[?&]in\b/.test(location.search)) openSite(true);
 addEventListener('load', () => { measure(); onScroll(); });

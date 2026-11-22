@@ -10,7 +10,7 @@ export function startWorld(canvas, opts = {}) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mobile = innerWidth < 760;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.25));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 0.85 : 1));
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.08;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   let seed = 41; const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
@@ -134,7 +134,7 @@ export function startWorld(canvas, opts = {}) {
     spin.add(mesh);
   }
   // the stream of loose cubes leaving the shank, flowing back through the ring
-  const NS = mobile ? 140 : 260;
+  const NS = mobile ? 110 : 180;
   const stream = new THREE.InstancedMesh(box, dMat.drill, NS);
   const sp = []; for (let i = 0; i < NS; i++) sp.push({ t: rnd(), a: rnd() * Math.PI * 2, r: rnd(), sz: 0.7 + 0.5 * rnd(), v: 0.05 + rnd() * 0.05 });
   drill.add(stream);
@@ -149,7 +149,7 @@ export function startWorld(canvas, opts = {}) {
   ring.add(ringMain, ringOut, ringOut2, ringIn, disc);
 
   // snow
-  const NSN = mobile ? 380 : 800, snowPos = new Float32Array(NSN * 3), snowV = new Float32Array(NSN);
+  const NSN = mobile ? 260 : 520, snowPos = new Float32Array(NSN * 3), snowV = new Float32Array(NSN);
   for (let i = 0; i < NSN; i++) { snowPos.set([-22 + rnd() * 60, -9 + rnd() * 24, -18 + rnd() * 28], i * 3); snowV[i] = 0.4 + rnd() * 0.9; }
   const sgeo = new THREE.BufferGeometry(); sgeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
   scene.add(new THREE.Points(sgeo, new THREE.PointsMaterial({ size: 0.08, color: 0xdfe3ff, transparent: true, opacity: 0.85 })));
@@ -340,14 +340,24 @@ export function startWorld(canvas, opts = {}) {
     frames++;
     if (frames === 2 && opts.onReady) opts.onReady();
   }
-  let lastDraw = 0;
+  let lastDraw = 0, ema = 16, lastAdapt = performance.now();
+  const maxPr = Math.min(devicePixelRatio || 1, mobile ? 1 : 1.25); let pr = Math.min(maxPr, mobile ? 0.85 : 1);
+  function applyPr() { renderer.setPixelRatio(pr); composer.setPixelRatio(pr); resize(); }
   function loop(now) {
     if (!running) return;
     requestAnimationFrame(loop);
     // behind the content bands the world only needs a slow heartbeat
     const lvl = opts.active ? opts.active() : 1;
+    if (lvl === 0 && !fly) { last = now; return; }              // hidden behind the page: keep the last frame, spend nothing
     if (lvl < 1 && now - lastDraw < 1000 / 10) return;
     const dt = Math.min(0.05, (now - last) / 1000); last = now; lastDraw = now;
+    // adaptive resolution: drop pixels before dropping frames
+    ema = ema * 0.94 + dt * 1000 * 0.06;
+    if (now - lastAdapt > 1500) {
+      if (ema > 21 && pr > 0.55) { pr = Math.max(0.55, pr - 0.12); applyPr(); lastAdapt = now; }
+      else if (ema > 24 && bloom.enabled) { bloom.enabled = false; lastAdapt = now; }          // last resort on weak GPUs
+      else if (ema < 13 && pr < maxPr && now - lastAdapt > 5000) { pr = Math.min(maxPr, pr + 0.08); applyPr(); lastAdapt = now; }
+    }
     frame(dt);
   }
   requestAnimationFrame(loop);
