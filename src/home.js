@@ -85,13 +85,15 @@ function bindMenu(btn, menu) {
     if (b.dataset.m === 'term') { e.preventDefault(); menu.hidden = true; wipeTo('/terminal#wallet'); }
   });
 }
-bindMenu($('#gConnect'), $('#gMenu')); bindMenu($('#nConnect'), $('#nMenu'));
+bindMenu($('#gConnect'), $('#gMenu')); bindMenu($('#nConnect'), $('#nMenu')); bindMenu($('#cardConnect'), $('#cMenu'));
 document.addEventListener('click', e => $$('.menu').forEach(m => { if (!m.hidden && !m.contains(e.target)) m.hidden = true; }));
 addEventListener('keydown', e => { if (e.key === 'Escape') $$('.menu').forEach(m => { m.hidden = true; }); });
 function renderConn() {
   const a = W.state().address;
   $('#gConnect').innerHTML = a ? `<i class="g"></i>${fmt.short(a)}` : 'Connect';
   $('#nConnect').innerHTML = a ? `<i class="g"></i>${fmt.short(a)}` : 'Connect';
+  $('#cardConnect').innerHTML = a ? `<i class="g"></i>${fmt.short(a)}` : 'Connect wallet';
+  drawCard(a);
 }
 W.onChange(renderConn); renderConn(); W.reconnect();
 
@@ -145,8 +147,22 @@ const encSec = $('#ring'), encRows = $$('#cipher .enc'), encTs = $$('#cipher [da
 const HEX = '0123456789abcdef';
 const roll = $('#roll');
 let lastEncK = -1;
+let lastY = scrollY, lastT = performance.now(), sv = 0;
 function scenes() {
   if (!entered) return;
+  // follow one fee
+  const fs = $('#follow'), fr = fs.getBoundingClientRect();
+  const inStory = fr.top <= 1 && fr.bottom >= innerHeight - 1;
+  const kf = prog(fs);
+  if (world) world.setStory(inStory ? kf : null);
+  const step = Math.min(3, Math.floor(kf * 4));
+  $$('.s4').forEach((el, i) => el.classList.toggle('on', inStory && i === step));
+  $$('.sdots i').forEach((el, i) => el.classList.toggle('on', i <= step && inStory));
+  // scroll speed bends the marquee and the big lines
+  const now = performance.now(), dy = scrollY - lastY, dtt = Math.max(16, now - lastT); lastY = scrollY; lastT = now;
+  sv = clamp(sv * 0.6 + (dy / dtt) * 6, -14, 14);
+  document.documentElement.style.setProperty('--sv', sv.toFixed(2));
+  document.documentElement.style.setProperty('--mx', (scrollY * -0.35).toFixed(1));
   const k1 = prog($('#about'));
   const n = Math.round(k1 * 1.15 * words.length);
   words.forEach((w, i) => w.classList.toggle('on', i < n));
@@ -324,6 +340,40 @@ live(); setInterval(() => { if (!document.hidden) live(); }, 15000);
 
 // back from the terminal (or a deep link): skip the gate
 let came = false; try { came = sessionStorage.getItem('h3lix:in') === '1'; } catch (e) {}
+(function settle() { requestAnimationFrame(settle); if (Math.abs(sv) > 0.05) { sv *= 0.86; document.documentElement.style.setProperty('--sv', sv.toFixed(2)); } })();
 measure(); onScroll();
 if (came || location.hash.length > 1 || /[?&]in\b/.test(location.search)) openSite(true);
 addEventListener('load', () => { measure(); onScroll(); });
+
+// ---------- holder card: drawn in the browser for the connected wallet ----------
+function drawDrill(c, ox, oy, cell, col) {
+  const R2 = Math.SQRT2;
+  for (let i = -24; i <= 24; i++) for (let j = -24; j <= 24; j++) {
+    const x = i + 0.5, y = j + 0.5, p = (-x + y) / R2, q = (x + y) / R2;
+    let w; if (p < -8) w = Math.max(0, 2.6 * (p + 11.2) / 3.2); else if (p < 3) w = 2.6; else if (p < 13.5) w = 1.5; else continue;
+    if (p < -11.2 || Math.abs(q) > w) continue;
+    if (p > -9.3 && p < 2.6 && (j + Math.floor(i / 3)) % 3 === 0) continue;
+    let f = 1; if (p > 3.2) { const u = (p - 3.2) / 10.3; if (u < 0.34) f = 0.78; else if (u < 0.67) { if ((i + j) % 2) continue; f = 0.66; } else { if ((i + j) % 2 || ((i * 7 + j * 13) % 10) / 10 < (u - 0.67) * 2.2) continue; f = 0.5; } }
+    const s = cell * f; c.fillStyle = col; c.fillRect(ox + i * cell + (cell - s) / 2, oy + j * cell + (cell - s) / 2, s, s);
+  }
+}
+async function drawCard(addr) {
+  const cv = $('#cardc'); if (!cv) return; const c = cv.getContext('2d'); const Wc = 1200, Hc = 675;
+  try { await document.fonts.load('600 100px Disp'); await document.fonts.load('500 20px Mono'); } catch (e) {}
+  c.fillStyle = '#07060f'; c.fillRect(0, 0, Wc, Hc);
+  const g = c.createRadialGradient(360, 330, 10, 360, 330, 520); g.addColorStop(0, 'rgba(255,90,50,.22)'); g.addColorStop(1, 'rgba(255,90,50,0)'); c.fillStyle = g; c.fillRect(0, 0, Wc, Hc);
+  for (let i = 0; i < 160; i++) { c.fillStyle = `rgba(238,236,255,${(0.15 + ((i * 37) % 60) / 100).toFixed(2)})`; c.fillRect((i * 263) % Wc, (i * 151) % Hc, 2, 2); }
+  c.strokeStyle = 'rgba(255,176,138,.85)'; c.lineWidth = 6; c.beginPath(); c.ellipse(360, 330, 210, 250, -0.35, 0, Math.PI * 2); c.stroke();
+  c.strokeStyle = 'rgba(255,90,50,.5)'; c.lineWidth = 2; c.beginPath(); c.ellipse(360, 330, 236, 276, -0.35, 0, Math.PI * 2); c.stroke();
+  drawDrill(c, 360, 300, 16, '#ff5a32');
+  c.fillStyle = '#f3f2fa'; c.font = '600 104px Disp'; c.fillText('H3LIX', 650, 250);
+  c.fillStyle = '#ff5a32'; c.font = '600 44px Disp'; c.fillText('Paid out in private.', 655, 315);
+  c.fillStyle = 'rgba(232,230,250,.5)'; c.font = '500 20px Mono'; c.fillText(addr ? 'HOLDER' : 'YOUR WALLET HERE', 657, 405);
+  c.fillStyle = '#f3f2fa'; c.font = '500 40px Mono'; c.fillText(addr ? addr.slice(0, 6) + '…' + addr.slice(-6) : '— connect —', 655, 455);
+  c.fillStyle = 'rgba(232,230,250,.45)'; c.font = '500 18px Mono'; c.fillText(new Date().toISOString().slice(0, 10) + '  ·  h3lix.vercel.app', 657, 600);
+  const dl = $('#cardDl'), x = $('#cardX');
+  dl.disabled = !addr; x.setAttribute('aria-disabled', addr ? 'false' : 'true');
+  x.href = 'https://x.com/intent/post?text=' + encodeURIComponent('I hold $H3LIX.\nPaid out in private.\n\nh3lix.vercel.app');
+}
+$('#cardDl').addEventListener('click', () => { const cv = $('#cardc'); cv.toBlob(b => { const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href = u; a.download = 'h3lix-card.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000); }, 'image/png'); });
+drawCard(W.state().address);

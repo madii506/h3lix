@@ -160,6 +160,65 @@ export function startWorld(canvas, opts = {}) {
   const egeo = new THREE.BufferGeometry(); egeo.setAttribute('position', new THREE.BufferAttribute(emb, 3));
   scene.add(new THREE.Points(egeo, new THREE.PointsMaterial({ size: 0.09, color: 0xff8a50, transparent: true, opacity: 0.9 })));
 
+  // ---- paired coins: small islands each carrying a voxel coin; their fees spiral into the ring ----
+  const coinIsl = [[-9.5, 6.5, -6.5], [9.5, 7.5, -7.5], [-10.5, -3.6, -3.0], [10.5, -1.6, -9.0]].map(([dx, dy, dz]) => new THREE.Vector3(RC.x + dx, RC.y + dy, RC.z + dz));
+  const coinMat = new THREE.MeshStandardMaterial({ color: 0xffc35a, emissive: 0xff8a20, emissiveIntensity: 0.55, roughness: 0.35, metalness: 0.4, flatShading: true });
+  const coins = [];
+  for (const [ci, P] of coinIsl.entries()) {
+    const g0 = groups.get('snow').list.length;
+    // a tiny island under each coin
+    const isl = new THREE.Group(); scene.add(isl);
+    const v = 0.34;
+    for (let x = -3; x <= 3; x++) for (let z = -3; z <= 3; z++) {
+      const d = Math.hypot(x, z); if (d > 3.2) continue;
+      const top = new THREE.Mesh(box, new THREE.MeshStandardMaterial({ color: d > 2.6 ? 0xc6d0ea : 0xeef2fc, roughness: 0.9, flatShading: true }));
+      top.position.set(P.x + x * v, P.y - 1.1, P.z + z * v); top.scale.setScalar(v * 0.98); isl.add(top);
+      const depth = Math.max(1, Math.round((3.4 - d) * 1.4));
+      for (let k = 1; k <= depth; k++) { const r = new THREE.Mesh(box, new THREE.MeshStandardMaterial({ color: [0x3e3459, 0x342a4f, 0x2b2444][(k + x + z + 9) % 3], roughness: 0.9, flatShading: true })); r.position.set(P.x + x * v, P.y - 1.1 - k * v, P.z + z * v); r.scale.setScalar(v * 0.98); isl.add(r); }
+    }
+    // the coin: a voxel disc standing up, turning
+    const coin = new THREE.Group(); coin.position.copy(P); scene.add(coin);
+    const cv = 0.16;
+    for (let x = -6; x <= 6; x++) for (let y = -6; y <= 6; y++) {
+      const d = Math.hypot(x, y); if (d > 6.3) continue;
+      const rim = d > 5.0 || (d < 2.6 && d > 1.6);
+      const m = new THREE.Mesh(box, rim ? coinMat : new THREE.MeshStandardMaterial({ color: 0xff9a3a, emissive: 0xff6a20, emissiveIntensity: 0.35, roughness: 0.4, metalness: 0.3, flatShading: true }));
+      m.position.set(x * cv, y * cv, 0); m.scale.set(cv, cv, cv * (rim ? 2.2 : 1.4)); coin.add(m);
+    }
+    coins.push({ g: coin, isl, ph: ci * 1.7, base: P.clone() });
+  }
+  // the fee streams: each coin sends cubes along a helix into the ring
+  const PER = mobile ? 22 : 40, NF = coinIsl.length * PER;
+  const feeMat = new THREE.MeshStandardMaterial({ color: 0xffb070, emissive: 0xff6a2a, emissiveIntensity: 1.1, roughness: 0.4, flatShading: true });
+  const fees = new THREE.InstancedMesh(box, feeMat, NF); scene.add(fees);
+  const feeP = []; for (let i = 0; i < NF; i++) feeP.push({ c: Math.floor(i / PER), s: (i % PER) / PER + rnd() * 0.02, v: 0.09 + rnd() * 0.05, a: rnd() * Math.PI * 2, sz: 0.09 + rnd() * 0.07 });
+  const fp = new THREE.Vector3(), fq = new THREE.Vector3(), ha = new THREE.Vector3(), hb = new THREE.Vector3(), hc = new THREE.Vector3();
+  function helixPoint(from, to, s, a, turns, R0, out) {
+    // from -> to with a widening-then-closing helix around the line, ease in
+    const e = s * s * (3 - 2 * s);
+    out.copy(from).lerp(to, e);
+    ha.subVectors(to, from).normalize();
+    hb.set(0, 1, 0).cross(ha).normalize(); hc.crossVectors(ha, hb);
+    const r = R0 * Math.sin(Math.PI * Math.min(1, s * 1.05)), th = a + s * turns * Math.PI * 2;
+    return out.addScaledVector(hb, Math.cos(th) * r).addScaledVector(hc, Math.sin(th) * r);
+  }
+  // ---- the story: one fee, followed from a coin, through the ring, to a holder's door ----
+  const heroMat = new THREE.MeshStandardMaterial({ color: 0xffe2b0, emissive: 0xffa040, emissiveIntensity: 2.2, roughness: 0.3, flatShading: true });
+  const hero = new THREE.Mesh(box, heroMat); hero.scale.setScalar(0.34); hero.visible = false; scene.add(hero);
+  const heroLight = new THREE.PointLight(0xff9a50, 0, 6, 1.6); scene.add(heroLight);
+  const trailN = 18, trail = new THREE.InstancedMesh(box, feeMat, trailN); trail.visible = false; scene.add(trail);
+  const doorAt = new THREE.Vector3(HX + 2.9, HY + 0.7, HZ + 2.6 + 0.9);
+  const sideV = new THREE.Vector3().crossVectors(RN, D).normalize();
+  const stIn = RC.clone().addScaledVector(sideV, 2.7).addScaledVector(RN, 1.4), stOut = RC.clone().addScaledVector(sideV, 2.7).addScaledVector(RN, -1.8);
+  const V1 = RC.clone().addScaledVector(sideV, 5.5).addScaledVector(RN, 12).add(new THREE.Vector3(0, 1.4, 0)), L1 = RC.clone().addScaledVector(sideV, 2.7);
+  const V2 = doorAt.clone().add(new THREE.Vector3(6.5, 3.6, 9.5));
+  let story = null; const storyHist = [];
+  function storyPos(t, out) {
+    if (t < 0.5) return helixPoint(coinIsl[1], stIn, t / 0.5, 0.6, 1.6, 2.2, out);
+    if (t < 0.6) return out.copy(stIn).lerp(stOut, (t - 0.5) / 0.1);
+    const u = (t - 0.6) / 0.4; out.copy(stOut).lerp(doorAt, u * u * (3 - 2 * u));
+    return out.add(new THREE.Vector3(0, Math.sin(u * Math.PI) * 3.2, 0));
+  }
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, cam));
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.36, 0.42, 0.9); composer.addPass(bloom);
@@ -202,6 +261,15 @@ export function startWorld(canvas, opts = {}) {
     ptr.x += (ptr.tx - ptr.x) * Math.min(1, dt * 2.5); ptr.y += (ptr.ty - ptr.y) * Math.min(1, dt * 2.5);
     const portrait = W / H < 1.2, S = ext || SHOTS[shot] || SHOTS.hero;
     tPos.set(...S.pos); tLook.set(...S.look);
+    if (story != null) {
+      // ride behind the fee to the ring, watch it pass through from outside, then watch it land in town
+      storyPos(story, fp); storyPos(Math.min(1, story + 0.03), fq);
+      const dir = fq.clone().sub(fp).normalize();
+      const follow = fp.clone().addScaledVector(dir, -6.5).add(new THREE.Vector3(0, 2.2, 0)).addScaledVector(sideV, 2.4);
+      const a = Math.min(1, Math.max(0, (story - 0.38) / 0.1)), b = Math.min(1, Math.max(0, (story - 0.62) / 0.1));
+      tPos.copy(follow).lerp(V1, a).lerp(V2, b);
+      tLook.copy(fp).lerp(L1, a * (1 - b)).lerp(fp, b);
+    }
     if (portrait) {                                    // tall screens: step back along the view and centre on the ring
       if (!ext && shot === 'hero') { tPos.x += 7.5; tPos.z += 6; tLook.x += 7.5; }
       else if (!ext && shot === 'gate') tPos.sub(tLook).multiplyScalar(1.9).add(tLook);
@@ -244,6 +312,29 @@ export function startWorld(canvas, opts = {}) {
     }
     for (let i = 0; i < NE; i++) { const e = embP[i]; const a = e.a + t * e.w; v3.set(e.s, Math.cos(a) * e.r, Math.sin(a) * e.r).applyQuaternion(drill.quaternion).add(RC); emb.set([v3.x, v3.y, v3.z], i * 3); }
     egeo.attributes.position.needsUpdate = true;
+    // coins turn and bob; fee cubes spiral into the ring
+    for (const c of coins) { c.g.rotation.y = t * 0.9 + c.ph; const b = Math.sin(t * 0.9 + c.ph) * 0.18; c.g.position.y = c.base.y + b; c.isl.position.y = b; }
+    for (let i = 0; i < NF; i++) {
+      const f = feeP[i]; if (!reduce) f.s += dt * f.v; if (f.s > 1) f.s -= 1;
+      helixPoint(coins[f.c].g.position, RC, f.s, f.a, 1.4, 1.6, fp);
+      o.position.copy(fp); o.quaternion.setFromAxisAngle(ax, f.a + t * 2); o.scale.setScalar(f.sz * (1 - f.s * 0.7)); o.updateMatrix(); fees.setMatrixAt(i, o.matrix);
+    }
+    fees.instanceMatrix.needsUpdate = true;
+    // story mode
+    if (story != null) {
+      storyPos(story, fp); hero.visible = true; trail.visible = true; hero.position.copy(fp); hero.rotation.set(t * 2, t * 3, 0);
+      const enc = story > 0.55; heroMat.color.set(enc ? 0xff5a32 : 0xffe2b0); heroMat.emissive.set(enc ? 0xff3010 : 0xffa040);
+      heroLight.position.copy(fp); heroLight.intensity = 18;
+      storyHist.unshift(fp.clone()); if (storyHist.length > trailN) storyHist.pop();
+      for (let i = 0; i < trailN; i++) { const q = storyHist[Math.min(i, storyHist.length - 1)]; o.position.copy(q); o.quaternion.identity(); o.scale.setScalar(0.2 * (1 - i / trailN)); o.updateMatrix(); trail.setMatrixAt(i, o.matrix); }
+      trail.instanceMatrix.needsUpdate = true;
+      const flare = Math.max(0, 1 - Math.abs(story - 0.55) / 0.08);
+      ringMain.material.color.setRGB(2.4 + flare * 3, 1.15 + flare * 1.6, 0.72 + flare * 1.2);
+      disc.material.opacity = 0.07 + flare * 0.35;
+      if (lights[1]) lights[1].intensity = 3.2 + Math.max(0, (story - 0.9) / 0.1) * 30;
+    } else if (hero.visible) {
+      hero.visible = false; trail.visible = false; heroLight.intensity = 0; ringMain.material.color.setRGB(2.4, 1.15, 0.72); if (lights[1]) lights[1].intensity = 3.2; storyHist.length = 0;
+    }
     composer.render();
     frames++;
     if (frames === 2 && opts.onReady) opts.onReady();
@@ -267,5 +358,5 @@ export function startWorld(canvas, opts = {}) {
     const front = RC.clone().add(side).addScaledVector(RN, 7.5), through = RC.clone().add(side).addScaledVector(RN, -9);
     fly = { t0: performance.now(), dur: reduce ? 0.3 : (opts2.dur || 2.6), p0: camPos.clone(), p1: front, p2: through, l0: camLook.clone(), l2: RC.clone().add(side).addScaledVector(RN, -30), onFlash: opts2.onFlash, onDone: opts2.onDone };
   }
-  return { frame, flyIn, setTarget: (pos, look) => { ext = pos ? { pos, look } : null; }, shots: SHOTS, setShot: (n, snap) => { if (!SHOTS[n]) return; shot = n; if (snap) { camPos.set(...SHOTS[n].pos); camLook.set(...SHOTS[n].look); } } };
+  return { frame, flyIn, setStory: v => { story = v; }, setTarget: (pos, look) => { ext = pos ? { pos, look } : null; }, shots: SHOTS, setShot: (n, snap) => { if (!SHOTS[n]) return; shot = n; if (snap) { camPos.set(...SHOTS[n].pos); camLook.set(...SHOTS[n].look); } } };
 }
