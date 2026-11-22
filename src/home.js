@@ -146,7 +146,9 @@ const hsSec = $('#loop'), track = $('#hstrack'), panels = $$('.hpanel');
 const encSec = $('#ring'), encRows = $$('#cipher .enc'), encTs = $$('#cipher [data-t]');
 const HEX = '0123456789abcdef';
 const roll = $('#roll');
-let lastEncK = -1;
+let lastEncK = -1, dialSet = false;
+const nBands = $$('.band[data-n]');
+function animDial(to) { const el = $('#dring'); const t0 = performance.now(); const tick = now => { const k = Math.min(1, (now - t0) / 1400), e = 1 - Math.pow(1 - k, 3); el.style.setProperty('--dp', (to * e).toFixed(2)); if (k < 1) requestAnimationFrame(tick); }; requestAnimationFrame(tick); }
 let lastY = scrollY, lastT = performance.now(), sv = 0;
 function scenes() {
   if (!entered) return;
@@ -184,7 +186,10 @@ function scenes() {
     $('#encbar').style.width = (k3 * 100) + '%';
     $('#encstate').textContent = k3 < 0.15 ? 'before the Ring' : k3 < 0.85 ? 'inside the Ring' : 'what the chain sees';
   }
+  for (const b of nBands) { const r = b.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) continue; b.style.setProperty('--gy', (40 + (r.top - innerHeight * 0.3) * -0.18).toFixed(0) + 'px'); }
   const rr = roll.getBoundingClientRect();
+  const done = $$('#roll li.done').length, all = $$('#roll li').length;
+  if (rr.top < innerHeight * 0.85 && !dialSet) { dialSet = true; animDial(done / all * 100); $('#dnum').textContent = done + '/' + all; }
   roll.style.setProperty('--fill', (clamp((innerHeight * 0.7 - rr.top) / rr.height) * 100) + '%');
   const wh = $('#wheel'); const wr = wh.getBoundingClientRect();
   if (wr.bottom > 0 && wr.top < innerHeight) wh.style.rotate = ((wr.top / innerHeight) * -40).toFixed(1) + 'deg';
@@ -245,12 +250,12 @@ amt.addEventListener('input', calc); day.addEventListener('input', calc); calc()
   const loop = () => {
     requestAnimationFrame(loop); if (!vis) return;
     t += 0.016; shown += (spiralDays - shown) * 0.08;
-    const Wd = cv.width, Hd = cv.height, cx = Wd / 2, cy = Hd / 2, cell = Wd / 52;
+    const Wd = cv.width, Hd = cv.height, cx = Wd / 2, cy = Hd / 2, cell = Wd / 40;
     c.clearRect(0, 0, Wd, Hd);
-    const turns = 0.6 + shown / 45 * 3.4, n = Math.floor(70 + shown * 9);
+    const turns = 0.6 + shown / 45 * 3.4, n = Math.floor(90 + shown * 11);
     for (let i = 0; i < n; i++) {
       const u = i / n, th = u * turns * Math.PI * 2 - t * 0.6, r = (0.06 + u * 0.42) * Wd;
-      const gx = Math.round((cx + Math.cos(th) * r) / cell) * cell, gy = Math.round((cy + Math.sin(th) * r * 0.92) / cell) * cell, s = cell * (0.5 + 0.5 * u);
+      const gx = Math.round((cx + Math.cos(th) * r) / cell) * cell, gy = Math.round((cy + Math.sin(th) * r * 0.92) / cell) * cell, s = cell * (0.62 + 0.38 * u);
       c.fillStyle = u > 0.985 ? '#fff' : `rgba(255,${Math.round(90 + 80 * (1 - u))},${Math.round(50 + 60 * (1 - u))},${(0.25 + 0.75 * u).toFixed(2)})`;
       c.fillRect(gx - s / 2, gy - s / 2, s, s);
     }
@@ -280,20 +285,21 @@ amt.addEventListener('input', calc); day.addEventListener('input', calc); calc()
     ['spiral 1000000 30', 'spiral 3.00× → weight 3.00M'],
   ];
   let started = false;
+  el.innerHTML = '<div><span class="p">h3lix&gt; </span><span>help</span></div><div class="o">' + script[0][1] + '</div>';
   new IntersectionObserver(es => { if (es[0].isIntersecting && !started) { started = true; run(); } }, { threshold: 0.3 }).observe(el);
   const wait = ms => new Promise(r => setTimeout(r, RM ? 0 : ms));
   async function run() {
     for (;;) {
-      el.innerHTML = '';
-      for (const [cmd, out] of script) {
+      for (const [cmd, out] of script.slice(1).concat([script[0]])) {
+        while (el.children.length > 9) el.firstChild.remove();
         const line = document.createElement('div'); line.innerHTML = '<span class="p">h3lix&gt; </span><span class="t"></span><span class="c"></span>'; el.appendChild(line);
         const t = line.querySelector('.t');
         for (const ch of cmd) { t.textContent += ch; await wait(45 + Math.random() * 60); }
         await wait(260); line.querySelector('.c').remove();
         const o = document.createElement('div'); o.className = 'o'; o.textContent = out; el.appendChild(o);
-        await wait(700);
+        await wait(900);
       }
-      await wait(2600);
+      await wait(1800);
     }
   }
 })();
