@@ -304,3 +304,24 @@ body:not(.locked) .nav{animation:navIn .8s .2s cubic-bezier(.2,.8,.2,1) backward
 .progress{display:none!important}
 .nav,.nav.solid{border-bottom:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .nav.solid{background:linear-gradient(180deg,rgba(7,6,15,.9) 0%,rgba(7,6,15,.55) 60%,rgba(7,6,15,0) 100%)}
+
+/* v5: follow one fee, scroll velocity, holder card */
+.story{height:520vh}
+.story .sticky{align-items:flex-end;background:linear-gradient(0deg,rgba(7,6,15,.85) 0%,rgba(7,6,15,.2) 38%,rgba(7,6,15,0) 60%)}
+.scap{padding:0 6vw 11vh;width:100%}
+.steps4{position:relative;height:clamp(120px,16vw,190px);max-width:980px}
+.s4{position:absolute;left:0;bottom:0;opacity:0;transform:translateY(30px);transition:opacity .6s,transform .7s cubic-bezier(.2,.8,.2,1)}
+.s4.on{opacity:1;transform:none}
+.s4 b{display:block;color:var(--acc);font-size:13px;margin-bottom:12px}
+.s4 h2{font-size:clamp(32px,4.6vw,68px);line-height:1;text-shadow:0 4px 40px rgba(7,6,15,.8)}
+.sdots{display:flex;gap:8px;margin-top:26px}
+.sdots i{width:34px;height:3px;background:rgba(232,230,250,.2);transition:background .3s}
+.sdots i.on{background:var(--acc)}
+.marquee{transform:rotate(-1.2deg) scale(1.03) skewX(calc(var(--sv,0) * -0.6deg))}
+.mrow{translate:calc(var(--mx,0) * 1px) 0}
+.mrow.rev{translate:calc(var(--mx,0) * -1px) 0}
+.wtext,.scap{transform:skewY(calc(var(--sv,0) * 0.12deg))}
+.cardwrap{width:100%}
+.cardwrap canvas{width:100%;height:auto;display:block;box-shadow:0 0 0 1px var(--line),0 40px 90px -40px rgba(255,90,50,.5)}
+a.btn[aria-disabled=true]{opacity:.45;pointer-events:none}
+@media (max-width:900px){.story{height:440vh}.scap{padding:0 16px 10vh}}
