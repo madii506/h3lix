@@ -213,7 +213,7 @@ body.locked #site,body.locked .nav,body.locked .chapters,body.locked .progress{v
 .gate{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;transition:opacity .8s,transform 1.2s cubic-bezier(.6,0,.2,1)}
 .gate::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 52%,rgba(7,6,15,.55) 0%,rgba(7,6,15,.18) 45%,rgba(7,6,15,0) 70%);pointer-events:none}
 .gate-c{position:relative;display:flex;flex-direction:column;align-items:center}
-.gate .mark{font-size:clamp(96px,17vw,250px)}
+.gate .mark{font-size:clamp(70px,12.5vw,184px)}
 .gate .sub{margin:14px 0 0}
 .gate .kick{margin-bottom:22px}
 .gbtns{display:flex;gap:14px;margin-top:38px;opacity:0;animation:up .9s 1.6s cubic-bezier(.2,.8,.2,1) forwards;flex-wrap:wrap;justify-content:center}
@@ -299,3 +299,8 @@ body:not(.locked) .nav{animation:navIn .8s .2s cubic-bezier(.2,.8,.2,1) backward
   .hpanel{min-height:52vh;padding:26px}
   .pxbig{transform:scale(1.25)}
 }
+
+/* v4: no lines at the top while scrolling */
+.progress{display:none!important}
+.nav,.nav.solid{border-bottom:0!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.nav.solid{background:linear-gradient(180deg,rgba(7,6,15,.9) 0%,rgba(7,6,15,.55) 60%,rgba(7,6,15,0) 100%)}
