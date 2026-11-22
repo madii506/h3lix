@@ -165,13 +165,13 @@ export function startWorld(canvas, opts = {}) {
   const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.36, 0.42, 0.9); composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
-  let W = 0, H = 0;
+  let W = 0, H = 0, baseFov = 30, fovKick = 0;
   function resize() {
     W = canvas.clientWidth; H = canvas.clientHeight;
     renderer.setSize(W, H, false); composer.setSize(W, H);
     cam.aspect = W / H;
     // keep the ring and the drill in frame on tall screens
-    cam.fov = W / H < 1.2 ? 52 : W / H < 1.7 ? 38 : 30;
+    baseFov = W / H < 1.2 ? 52 : W / H < 1.7 ? 38 : 30; cam.fov = baseFov + fovKick;
     cam.updateProjectionMatrix();
   }
   resize(); addEventListener('resize', resize);
@@ -183,9 +183,13 @@ export function startWorld(canvas, opts = {}) {
     side: { pos: [-9, 1.5, 15], look: [9.5, 1.6, 0] },
     end: { pos: [11.0, 2.4, 21], look: [12.2, 1.2, 0] },
   };
-  let shot = 'hero';
-  const camPos = new THREE.Vector3(...SHOTS.hero.pos), camLook = new THREE.Vector3(...SHOTS.hero.look);
+  const gp = RC.clone().addScaledVector(RN, 23).add(new THREE.Vector3(0, -0.2, 0));
+  SHOTS.gate = { pos: [gp.x, gp.y, gp.z], look: [RC.x, RC.y - 0.4, RC.z] };
+  let shot = opts.startShot || 'hero';
+  const camPos = new THREE.Vector3(...SHOTS[shot].pos), camLook = new THREE.Vector3(...SHOTS[shot].look);
   const tPos = new THREE.Vector3(), tLook = new THREE.Vector3();
+  let ext = null;                                     // {pos:[x,y,z], look:[x,y,z]} from the page's scroll path
+  let fly = null;                                     // the fly-in through the ring
   const ptr = { x: 0, y: 0, tx: 0, ty: 0 };
   addEventListener('pointermove', e => { ptr.tx = e.clientX / innerWidth - 0.5; ptr.ty = e.clientY / innerHeight - 0.5; }, { passive: true });
   let scrollK = 0;
@@ -196,15 +200,28 @@ export function startWorld(canvas, opts = {}) {
   function frame(dt) {
     t += dt;
     ptr.x += (ptr.tx - ptr.x) * Math.min(1, dt * 2.5); ptr.y += (ptr.ty - ptr.y) * Math.min(1, dt * 2.5);
-    const portrait = W / H < 1.2, S = SHOTS[shot] || SHOTS.hero;
+    const portrait = W / H < 1.2, S = ext || SHOTS[shot] || SHOTS.hero;
     tPos.set(...S.pos); tLook.set(...S.look);
     if (portrait) {                                    // tall screens: step back along the view and centre on the ring
-      if (shot === 'hero') { tPos.x += 7.5; tPos.z += 6; tLook.x += 7.5; }
+      if (!ext && shot === 'hero') { tPos.x += 7.5; tPos.z += 6; tLook.x += 7.5; }
+      else if (!ext && shot === 'gate') tPos.sub(tLook).multiplyScalar(1.9).add(tLook);
       else tPos.sub(tLook).multiplyScalar(1.35).add(tLook);
     }
     tPos.x += ptr.x * 2.2; tPos.y -= ptr.y * 1.4;
-    const k = 1 - Math.exp(-dt * (reduce ? 8 : 1.5));
-    camPos.lerp(tPos, k); camLook.lerp(tLook, k);
+    if (fly) {
+      // through the portal: ease from where we are to the ring's face, then straight through it while the lens widens
+      const u = Math.min(1, (performance.now() - fly.t0) / 1000 / fly.dur);
+      const e = u < 0.62 ? 0.62 * Math.pow(u / 0.62, 2.2) : u;
+      const a = Math.min(1, e / 0.62), b = Math.max(0, (e - 0.62) / 0.38);
+      const P = fly.p0.clone().lerp(fly.p1, a * a * (3 - 2 * a)).lerp(fly.p2, b);
+      camPos.copy(P); camLook.copy(fly.l0.clone().lerp(fly.p1.clone().addScaledVector(RN, -10), Math.min(1, a * 1.3)).lerp(fly.l2, b));
+      fovKick = Math.pow(u, 3) * 55; cam.fov = baseFov + fovKick; cam.updateProjectionMatrix();
+      if (u >= 0.86 && !fly.flashed) { fly.flashed = true; fly.onFlash && fly.onFlash(); }
+      if (u >= 1) { const done = fly.onDone; fly = null; fovKick = 0; cam.fov = baseFov; cam.updateProjectionMatrix(); camPos.set(...(ext ? ext.pos : SHOTS.hero.pos)); camLook.set(...(ext ? ext.look : SHOTS.hero.look)); done && done(); }
+    } else {
+      const k = 1 - Math.exp(-dt * (reduce ? 8 : 2.2));
+      camPos.lerp(tPos, k); camLook.lerp(tLook, k);
+    }
     cam.position.copy(camPos); cam.lookAt(camLook);
     // drill turns on its axis and breathes along it
     spin.rotation.x = -t * (reduce ? 0.2 : 1.1);
@@ -244,5 +261,11 @@ export function startWorld(canvas, opts = {}) {
   requestAnimationFrame(loop);
   // a frame even if rAF is throttled (background tab, headless)
   setTimeout(() => { if (frames === 0) frame(0.016); }, 1500);
-  return { frame, setShot: (n, snap) => { if (!SHOTS[n]) return; shot = n; if (snap) { camPos.set(...SHOTS[n].pos); camLook.set(...SHOTS[n].look); } } };
+  function flyIn(opts2 = {}) {
+    // pass through the ring beside the drill, not through it
+    const side = new THREE.Vector3().crossVectors(RN, D).normalize().multiplyScalar(2.7);
+    const front = RC.clone().add(side).addScaledVector(RN, 7.5), through = RC.clone().add(side).addScaledVector(RN, -9);
+    fly = { t0: performance.now(), dur: reduce ? 0.3 : (opts2.dur || 2.6), p0: camPos.clone(), p1: front, p2: through, l0: camLook.clone(), l2: RC.clone().add(side).addScaledVector(RN, -30), onFlash: opts2.onFlash, onDone: opts2.onDone };
+  }
+  return { frame, flyIn, setTarget: (pos, look) => { ext = pos ? { pos, look } : null; }, shots: SHOTS, setShot: (n, snap) => { if (!SHOTS[n]) return; shot = n; if (snap) { camPos.set(...SHOTS[n].pos); camLook.set(...SHOTS[n].look); } } };
 }
